@@ -10,6 +10,8 @@ from pathlib import Path
 from typing import Dict, Optional, List
 from datetime import datetime
 
+from django.conf import settings
+
 
 class UserManager:
     """
@@ -37,9 +39,23 @@ class UserManager:
         """Carrega todos os usuários do arquivo JSON."""
         try:
             with open(self.users_file, 'r', encoding='utf-8') as f:
-                return json.load(f)
+                users = json.load(f)
+                # Normaliza campos novos para compatibilidade
+                for u in users:
+                    if 'must_change_password' not in u:
+                        u['must_change_password'] = False
+                return users
         except (json.JSONDecodeError, FileNotFoundError):
             return []
+
+    def _compute_role(self, user: Dict) -> str:
+        """Resolve o papel do usuário (não persiste automaticamente)."""
+        superadmin_username = getattr(settings, 'SUPERADMIN_USERNAME', '') or ''
+        if superadmin_username and user.get('username') == superadmin_username:
+            return 'SUPERADMIN'
+        if user.get('position') == 'Administrador':
+            return 'ADMIN'
+        return 'USER'
     
     def save_users(self, users: List[Dict]) -> None:
         """Salva usuários no arquivo JSON."""
@@ -60,6 +76,9 @@ class UserManager:
                 # Retorna usuário sem a senha
                 user_copy = user.copy()
                 user_copy.pop('password_hash', None)
+                user_copy.pop('password_plain', None)
+                user_copy['role'] = self._compute_role(user)
+                user_copy['is_superadmin'] = (user_copy['role'] == 'SUPERADMIN')
                 return user_copy
         
         return None
@@ -71,15 +90,26 @@ class UserManager:
             if user.get('username') == username:
                 user_copy = user.copy()
                 user_copy.pop('password_hash', None)
+                user_copy.pop('password_plain', None)
+                user_copy['role'] = self._compute_role(user)
+                user_copy['is_superadmin'] = (user_copy['role'] == 'SUPERADMIN')
                 return user_copy
+        return None
+
+    def get_user_password_for_superadmin(self, username: str) -> Optional[str]:
+        """Retorna a senha atual (texto) do usuário, se armazenada."""
+        users = self.load_users()
+        for user in users:
+            if user.get('username') == username:
+                return user.get('password_plain')
         return None
     
     def user_exists(self, username: str) -> bool:
         """Verifica se um usuário já existe."""
         return self.get_user_by_username(username) is not None
     
-    def create_user(self, username: str, password: str, name: str, 
-                   position: str = 'Operador') -> Dict:
+    def create_user(self, username: str, password: str, name: str,
+                   position: str = 'Operador', must_change_password: bool = True) -> Dict:
         """
         Cria um novo usuário.
         
@@ -101,10 +131,14 @@ class UserManager:
             'id': len(users) + 1,
             'username': username,
             'password_hash': self.hash_password(password),
+            # Atenção: armazenar senha em texto plano é sensível. Necessário para o caso de uso
+            # solicitado (apenas SUPERADMIN pode visualizar). O acesso é bloqueado por permissão.
+            'password_plain': password,
             'name': name,
             'position': position,
             'created_at': datetime.now().isoformat(),
-            'last_login': None
+            'last_login': None,
+            'must_change_password': bool(must_change_password),
         }
         
         users.append(new_user)
@@ -113,6 +147,9 @@ class UserManager:
         # Retorna sem a senha
         user_copy = new_user.copy()
         user_copy.pop('password_hash')
+        user_copy.pop('password_plain', None)
+        user_copy['role'] = self._compute_role(new_user)
+        user_copy['is_superadmin'] = (user_copy['role'] == 'SUPERADMIN')
         return user_copy
     
     def update_last_login(self, username: str) -> None:
@@ -144,6 +181,9 @@ class UserManager:
                 
                 user_copy = user.copy()
                 user_copy.pop('password_hash', None)
+                user_copy.pop('password_plain', None)
+                user_copy['role'] = self._compute_role(user)
+                user_copy['is_superadmin'] = (user_copy['role'] == 'SUPERADMIN')
                 return user_copy
         
         return None
@@ -162,10 +202,12 @@ class UserManager:
     def list_all_users(self) -> List[Dict]:
         """Lista todos os usuários (sem senhas)."""
         users = self.load_users()
-        return [
-            {k: v for k, v in user.items() if k != 'password_hash'}
-            for user in users
-        ]
+        safe_users = []
+        for user in users:
+            safe = {k: v for k, v in user.items() if k not in ('password_hash', 'password_plain')}
+            safe['role'] = self._compute_role(user)
+            safe_users.append(safe)
+        return safe_users
     
     def change_password(self, username: str, old_password: str, new_password: str) -> bool:
         """Altera a senha de um usuário."""
@@ -177,10 +219,37 @@ class UserManager:
             if user.get('username') == username:
                 if user.get('password_hash') == old_password_hash:
                     user['password_hash'] = new_password_hash
+                    user['password_plain'] = new_password
+                    user['must_change_password'] = False
                     self.save_users(users)
                     return True
                 return False
         
+        return False
+
+    def set_password_admin(self, username: str, new_password: str, force_user_reset: bool = True) -> bool:
+        """Reseta a senha (sem exigir senha antiga). Uso restrito ao SUPERADMIN."""
+        users = self.load_users()
+        for user in users:
+            if user.get('username') == username:
+                user['password_hash'] = self.hash_password(new_password)
+                user['password_plain'] = new_password
+                if force_user_reset:
+                    user['must_change_password'] = True
+                self.save_users(users)
+                return True
+        return False
+
+    def set_password_self(self, username: str, new_password: str) -> bool:
+        """Define a senha do próprio usuário (sem exigir old_password) e libera acesso."""
+        users = self.load_users()
+        for user in users:
+            if user.get('username') == username:
+                user['password_hash'] = self.hash_password(new_password)
+                user['password_plain'] = new_password
+                user['must_change_password'] = False
+                self.save_users(users)
+                return True
         return False
 
 

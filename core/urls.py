@@ -19,4 +19,6 @@ urlpatterns = [
     path('appointment/<int:appointment_id>/update/', views.update_appointment, name='update_appointment'),
     path('appointment/<int:appointment_id>/delete/', views.delete_appointment, name='delete_appointment'),
     path('appointments-by-date/', views.list_appointments_by_date, name='list_appointments_by_date'),
+    # Vaccines (stock)
+    path('vaccine/create/', views.create_vaccine, name='create_vaccine'),
 ]

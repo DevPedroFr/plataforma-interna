@@ -50,7 +50,7 @@
                         {% for week in month_days %}
                             {% for day in week %}
                                 {% if day != 0 %}
-                                    <div class="calendar-day-card {% if day == today.day and current_month == today.month and current_year == today.year %}today{% endif %}" data-date="{{ day }}-{{ current_month }}-{{ current_year }}">
+                                    <div class="calendar-day-card {% if day == today.day and current_month == today.month and current_year == today.year %}today{% endif %}" data-date="{{ current_year }}-{{ current_month|stringformat:'02d' }}-{{ day|stringformat:'02d' }}">
                                         <div class="day-header">
                                             <span class="day-number">{{ day }}</span>
                                             {% if appointments_by_day|get_item:day %}
@@ -78,7 +78,7 @@
                                         </div>
                                         
                                         <div class="day-actions">
-                                            <button class="btn btn-sm btn-outline-success add-event-btn" data-day="{{ day }}" data-bs-toggle="modal" data-bs-target="#newEventModal" onclick="setEventDate({{ day }}, {{ current_month }}, {{ current_year }})">
+                                            <button class="btn btn-sm btn-outline-success add-event-btn" data-day="{{ day }}" data-bs-toggle="modal" data-bs-target="#newEventModal" onclick="event.stopPropagation(); setEventDate({{ day }}, {{ current_month }}, {{ current_year }})">
                                                 <i class="fas fa-plus"></i>
                                             </button>
                                         </div>
@@ -278,6 +278,26 @@
         </div>
     </div>
 </div>
+
+<!-- Modal: Agendamentos do Dia -->
+<div class="modal fade" id="dayAppointmentsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Agendamentos de <span id="dayModalDate"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="dayAppointmentsList">
+                    <!-- Preenchido via JavaScript -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+    </div>
 
 <!-- Modal: Sincronizar Eventos -->
 <div class="modal fade" id="syncModal" tabindex="-1">
@@ -657,12 +677,79 @@
         // Set data de hoje como padrão
         const today = new Date().toISOString().split('T')[0];
         document.getElementById('eventDate').value = today;
+
+        // Bind click to day cards via delegation to ensure reliability
+        document.querySelectorAll('.calendar-day-card').forEach(card => {
+            card.addEventListener('click', function(e) {
+                // Avoid clicks from inner action buttons triggering
+                const target = e.target;
+                if (target.closest('.add-event-btn')) return;
+                if (target.closest('.event-item')) return; // handled separately
+                openDayAppointments(this);
+            });
+        });
     });
 
     // Função para definir a data do evento no modal
     function setEventDate(day, month, year) {
         const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
         document.getElementById('eventDate').value = dateStr;
+    }
+
+    // Abrir modal com agendamentos do dia
+    function openDayAppointments(el) {
+        const isoDate = el.getAttribute('data-date'); // YYYY-MM-DD
+        if (!isoDate) return;
+
+        const [y, m, d] = isoDate.split('-');
+        document.getElementById('dayModalDate').textContent = `${d}/${m}/${y}`;
+
+        const listDiv = document.getElementById('dayAppointmentsList');
+        listDiv.innerHTML = '<div class="text-center text-muted py-3"><div class="spinner-border" role="status"></div><p class="mt-2">Carregando agendamentos...</p></div>';
+
+        fetch(`{% url "core:list_appointments_by_date" %}?date=${isoDate}`)
+            .then(r => r.json())
+            .then(data => {
+                if (data.status !== 'success') {
+                    listDiv.innerHTML = `<p class="text-danger">Erro: ${data.message || 'Falha ao carregar'}</p>`;
+                    return;
+                }
+                const apps = data.appointments || [];
+                if (apps.length === 0) {
+                    listDiv.innerHTML = '<div class="text-center text-muted py-3"><i class="fas fa-calendar-times fa-2x mb-2"></i><p>Sem agendamentos neste dia</p></div>';
+                    return;
+                }
+
+                const statusLabels = {
+                    'scheduled': 'Agendado',
+                    'confirmed': 'Confirmado',
+                    'completed': 'Concluído',
+                    'cancelled': 'Cancelado'
+                };
+
+                const items = apps.map(a => `
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="fw-semibold">${a.user_name}</div>
+                            <div class="small text-muted"><i class="fas fa-clock me-1"></i>${a.appointment_time} · <i class="fas fa-syringe me-1"></i>${a.vaccine_name}</div>
+                            <div class="small"><span class="badge bg-info">${statusLabels[a.status] || a.status}</span></div>
+                        </div>
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-primary" onclick="viewEventDetails(event, ${a.id})" title="Abrir"><i class="fas fa-eye"></i></button>
+                            <button class="btn btn-outline-warning" onclick="editEventModal(${a.id})" title="Editar"><i class="fas fa-edit"></i></button>
+                            <button class="btn btn-outline-danger" onclick="deleteEvent(${a.id})" title="Deletar"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </div>
+                `).join('');
+
+                listDiv.innerHTML = `<div class="list-group list-group-flush">${items}</div>`;
+            })
+            .catch(err => {
+                console.error(err);
+                listDiv.innerHTML = '<p class="text-danger">Erro ao carregar agendamentos</p>';
+            });
+
+        new bootstrap.Modal(document.getElementById('dayAppointmentsModal')).show();
     }
 
     // Função para criar novo evento

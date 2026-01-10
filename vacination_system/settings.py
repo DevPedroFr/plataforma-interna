@@ -8,7 +8,20 @@ SECRET_KEY = config('SECRET_KEY', default='sua-chave-secreta-aqui-desenvolva-202
 
 DEBUG = config('DEBUG', default=True, cast=bool)
 
+# =========================================================================
+# AUTENTICAÇÃO (users.json)
+# =========================================================================
+# Usuário "dono" (único com permissão para ver/resetar senhas de outros).
+SUPERADMIN_USERNAME = config('SUPERADMIN_USERNAME', default='pedro')
+
+# Senha padrão para usuários criados (se não informada ou se o criador não for SUPERADMIN)
+DEFAULT_USER_PASSWORD = config('DEFAULT_USER_PASSWORD', default='123456')
+
 ALLOWED_HOSTS = ['*']
+
+CSRF_TRUSTED_ORIGINS = [
+    'https://prettied-unsensitively-kerstin.ngrok-free.dev',
+]
 
 # vacination_system/settings.py
 INSTALLED_APPS = [

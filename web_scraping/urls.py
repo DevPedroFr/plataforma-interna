@@ -12,11 +12,13 @@ urlpatterns = [
     # Estoque
     path('sync-stock/', views.sync_stock, name='sync_stock'),
     path('stock-data/', views.stock_data, name='stock_data'),
-    path('generate-mock/', views.generate_mock, name='generate_mock'),
     
     # Usuários recentes
     path('sync-recent-users/', views.sync_recent_users, name='sync_recent_users'),
     path('recent-users-data/', views.recent_users_data, name='recent_users_data'),
+
+    # Busca por CPF (paciente)
+    path('search-patient/', views.search_patient_by_cpf, name='search_patient_by_cpf'),
     
     # Google Forms - Sincronização e Registro de Pacientes
     path('sync-google-forms/', views_google_forms.trigger_google_forms_sync, name='sync_google_forms'),

@@ -7,6 +7,7 @@ from .utils.browser_manager import BrowserManager
 from .services.stock_scraper import StockScraper
 from .services.users_scraper import UsersScraper
 from .services.calendar_scraper import CalendarScraper
+from .services.patient_search_scraper import PatientSearchScraper
 from core.models import Vaccine, Appointment
 import json
 import time
@@ -187,49 +188,47 @@ def recent_users_data(request):
             'message': f'Erro ao carregar dados: {str(e)}'
         }, status=500)
 
-@require_http_methods(["GET"])
-def generate_mock(request):
-    """Gera dados mock para teste"""
+# Rotas de geração de dados fictícios foram removidas para garantir que
+# todo dado exibido no dashboard venha exclusivamente de scraping.
+
+@require_http_methods(["POST"])
+@csrf_exempt
+def search_patient_by_cpf(request):
+    """Busca paciente no sistema legado por CPF (web scraping)"""
+    browser = None
     try:
-        # Cria algumas vacinas de exemplo
-        vaccines_mock = [
-            {
-                'name': 'COVID-19 (Pfizer)',
-                'laboratory': 'Pfizer',
-                'current_stock': 150,
-                'min_stock': 50
-            },
-            {
-                'name': 'Influenza (Tetravalente)',
-                'laboratory': 'Sanofi',
-                'current_stock': 30,
-                'min_stock': 50
-            },
-            {
-                'name': 'Hepatite B',
-                'laboratory': 'GSK',
-                'current_stock': 0,
-                'min_stock': 20
-            },
-        ]
-        
-        for vaccine_data in vaccines_mock:
-            Vaccine.objects.get_or_create(
-                name=vaccine_data['name'],
-                defaults={
-                    'laboratory': vaccine_data['laboratory'],
-                    'current_stock': vaccine_data['current_stock'],
-                    'min_stock': vaccine_data['min_stock'],
-                }
-            )
-        
+        body = request.body.decode('utf-8') if request.body else ''
+        cpf = request.POST.get('cpf') or (json.loads(body).get('cpf') if body else None)
+        if not cpf:
+            return JsonResponse({
+                'status': 'error',
+                'message': 'Informe o CPF.'
+            }, status=400)
+
+        browser = BrowserManager()
+        browser.start_browser(headless=True)
+
+        scraper = PatientSearchScraper(browser)
+        result = scraper.search_by_cpf(cpf)
+
+        if not result:
+            return JsonResponse({
+                'status': 'not_found',
+                'message': 'Nenhum paciente encontrado para este CPF.'
+            })
+
         return JsonResponse({
             'status': 'success',
-            'message': 'Dados de teste gerados com sucesso'
+            'patient': result
         })
-        
     except Exception as e:
         return JsonResponse({
             'status': 'error',
-            'message': f'Erro ao gerar dados: {str(e)}'
+            'message': f'Erro ao buscar paciente: {str(e)}'
         }, status=500)
+    finally:
+        if browser and browser.driver:
+            try:
+                browser.quit_browser()
+            except Exception:
+                pass
