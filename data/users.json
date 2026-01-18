@@ -7,7 +7,7 @@
     "name": "Administrador",
     "position": "Administrador",
     "created_at": "2024-12-02T10:00:00",
-    "last_login": "2026-01-16T04:08:10.703803",
+    "last_login": "2026-01-18T01:07:52.669214",
     "must_change_password": false
   },
   {
@@ -73,6 +73,17 @@
     "name": "Gisele",
     "position": "Operador",
     "created_at": "2026-01-16T01:59:32.663973",
+    "last_login": null,
+    "must_change_password": true
+  },
+  {
+    "id": 8,
+    "username": "bruna.vieira",
+    "password_hash": "9103f7f655849cec2f9ef9fa9c32b0cfc76a62c19c2b3a067aec43ecca914071",
+    "password_plain": "mudar@123",
+    "name": "Bruna Vieira",
+    "position": "Operador",
+    "created_at": "2026-01-16T06:27:02.399952",
     "last_login": null,
     "must_change_password": true
   }

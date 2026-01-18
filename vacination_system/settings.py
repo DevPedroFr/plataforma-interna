@@ -161,3 +161,7 @@ if _google_creds_path and not _google_creds_path.exists():
     )
 
 ALLOWED_HOSTS = ['*']
+
+# Configurações do scraper de estoque
+STOCK_SCRAPER_MAX_PAGES = 100  # Número máximo de páginas a processar
+STOCK_SCRAPER_AJAX_WAIT_SECONDS = 2.0  # Tempo de espera entre páginas
