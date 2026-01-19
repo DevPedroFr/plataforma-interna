@@ -9,6 +9,8 @@ from .services.users_scraper import UsersScraper
 from .services.calendar_scraper import CalendarScraper
 from .services.patient_search_scraper import PatientSearchScraper
 from core.models import Vaccine, Appointment
+from django.conf import settings
+import os
 import json
 import time
 
@@ -105,41 +107,90 @@ def sync_stock(request):
 
 @require_http_methods(["GET"])
 def stock_data(request):
-    """Retorna dados do estoque atual"""
+    """Retorna dados do estoque atual a partir do banco interno (JSON)."""
     try:
-        vaccines = Vaccine.objects.all()
-        
+        json_path = getattr(settings, 'INTERNAL_STOCK_JSON', None)
+        if not json_path:
+            # padrão: BASE_DIR/data/vaccines.json
+            json_path = os.path.join(settings.BASE_DIR, 'data', 'vaccines.json')
+
+        if not os.path.exists(json_path):
+            return JsonResponse({
+                'status': 'error',
+                'message': f'Arquivo de estoque não encontrado: {json_path}'
+            }, status=404)
+
+        with open(json_path, 'r', encoding='utf-8') as f:
+            payload = json.load(f)
+
+        items = payload.get('items', [])
         vaccines_data = []
-        for vaccine in vaccines:
-            # Define status baseado no estoque
-            if vaccine.current_stock == 0:
+        summary = {
+            'total_items': len(items),
+            'items_out': 0,
+            'items_low': 0,
+            'inventory_value': 0.0,      # soma(current_stock * purchase_price)
+            'potential_revenue': 0.0      # soma(available_stock * sale_price)
+        }
+
+        for item in items:
+            name = item.get('name') or 'Item'
+            lab = item.get('laboratory') or 'N/A'
+            current = int(item.get('current_stock', 0) or 0)
+            available = int(item.get('available_stock', current) or current)
+            min_stock = int(item.get('min_stock', 0) or 0)
+            purchase = float(item.get('purchase_price', 0) or 0)
+            sale = float(item.get('sale_price', 0) or 0)
+            min_age_m = int(item.get('min_age_months', 0) or 0)
+            max_age_m = int(item.get('max_age_months', 0) or 0)
+            unit_margin = round(sale - purchase, 2)
+            inv_value = round(current * purchase, 2)
+            pot_revenue = round(available * sale, 2)
+
+            if current <= 0:
                 status_class = 'status-out'
                 status_text = 'Esgotado'
-            elif vaccine.current_stock < vaccine.min_stock:
+            elif current < min_stock:
                 status_class = 'status-low'
-                status_text = f'Estoque Baixo ({vaccine.current_stock} unidades)'
+                status_text = f'Estoque Baixo ({current} unidades)'
             else:
                 status_class = 'status-available'
-                status_text = f'Disponível ({vaccine.current_stock} unidades)'
-            
+                status_text = f'Disponível ({current} unidades)'
+
             vaccines_data.append({
-                'name': vaccine.name,
-                'laboratory': vaccine.laboratory or 'N/A',
-                'current_stock': vaccine.current_stock,
-                'stock': vaccine.current_stock,  # Alias para compatibilidade com frontend
-                'available_stock': vaccine.available_stock,
-                'min_stock': vaccine.min_stock,
-                'purchase_price': float(vaccine.purchase_price) if vaccine.purchase_price else 0,
-                'sale_price': float(vaccine.sale_price) if vaccine.sale_price else 0,
+                'name': name,
+                'laboratory': lab,
+                'current_stock': current,
+                'stock': current,  # Alias para compatibilidade com frontend
+                'available_stock': available,
+                'min_stock': min_stock,
+                'purchase_price': purchase,
+                'sale_price': sale,
+                'unit_margin': unit_margin,
+                'inventory_value': inv_value,
+                'potential_revenue': pot_revenue,
+                'min_age_months': min_age_m,
+                'max_age_months': max_age_m,
                 'status_class': status_class,
                 'status_text': status_text
             })
-        
+
+            # Atualiza resumo
+            summary['inventory_value'] += inv_value
+            summary['potential_revenue'] += pot_revenue
+            if current == 0:
+                summary['items_out'] += 1
+            elif current < min_stock:
+                summary['items_low'] += 1
+
         return JsonResponse({
             'status': 'success',
-            'vaccines': vaccines_data
+            'source': 'json',
+            'vaccines': vaccines_data,
+            'summary': summary,
+            'last_updated': payload.get('last_updated')
         })
-        
+
     except Exception as e:
         return JsonResponse({
             'status': 'error',

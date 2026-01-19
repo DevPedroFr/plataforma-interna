@@ -268,7 +268,7 @@ tail -f logs/celery_worker.log
 | `/admin/` | Painel Administrativo Django |
 | `/calendar/` | Calendário de Agendamentos |
 | `/chatbot/webhook/whatsapp/` | Webhook para WAHA |
-| `/scraping/sync-stock/` | Sincronizar Estoque |
+| `/scraping/stock-data/` | Dados de Estoque (JSON interno) |
 | `/scraping/sync-calendar/` | Sincronizar Calendário |
 
 ### Fluxo do Chatbot
@@ -338,6 +338,37 @@ plataforma-jm-novo/
 | `POST` | `/appointments/<id>/update/` | Atualizar agendamento |
 | `POST` | `/appointments/<id>/delete/` | Deletar agendamento |
 | `GET` | `/appointments/by-date/?date=YYYY-MM-DD` | Agendamentos por data |
+
+### Estoque (JSON interno)
+
+| Método | Endpoint | Descrição |
+|--------|----------|-----------|
+| `GET` | `/scraping/stock-data/` | Retorna os itens do arquivo JSON interno |
+
+O painel lê o arquivo `data/vaccines.json` por padrão. Para apontar outro arquivo, defina `INTERNAL_STOCK_JSON` em `vacination_system/settings.py`.
+
+Formato do JSON:
+
+```
+{
+    "last_updated": "2026-01-18T00:00:00Z",
+    "items": [
+        {
+            "name": "DTPa + IPV - Refortrix IPV",
+            "laboratory": "GSK",
+            "purchase_price": 117.00,
+            "sale_price": 215.00,
+            "current_stock": 20,
+            "available_stock": 20,
+            "min_stock": 2
+        }
+    ]
+}
+```
+
+Para atualizar o painel:
+- Edite `data/vaccines.json`
+- No painel de Estoque, clique em “Atualizar Estoque”
 
 ### Sincronização
 
