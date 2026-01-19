@@ -15,6 +15,21 @@ from web_scraping.utils.browser_manager import BrowserManager
 from user_auth.decorators import login_required
 from user_auth.user_manager import user_manager
 import calendar
+from django.conf import settings
+
+
+def _is_admin(session_user: dict) -> bool:
+    """Verifica se o usuário é admin ou superadmin"""
+    if not session_user:
+        return False
+    # Verifica se é superadmin
+    if session_user.get('is_superadmin') or session_user.get('role') == 'SUPERADMIN':
+        return True
+    if getattr(settings, 'SUPERADMIN_USERNAME', '') and session_user.get('username') == settings.SUPERADMIN_USERNAME:
+        return True
+    # Verifica se é admin
+    return session_user.get('position') == 'Administrador' or session_user.get('role') == 'ADMIN'
+
 
 @login_required
 def dashboard(request):
@@ -27,6 +42,7 @@ def dashboard(request):
 
     # Get current user from session
     current_user = request.session.get('user', {})
+    is_admin = _is_admin(current_user)
 
     # Stock info
     vaccine_names = list(Vaccine.objects.values_list('name', flat=True))
@@ -188,6 +204,7 @@ def dashboard(request):
         'vaccines': vaccines,
         'users': users_list,
         'current_user': current_user,
+        'is_admin': is_admin,
         # Chart data
         'completed_series_labels': completed_series_labels,
         'completed_series_values': completed_series_values,

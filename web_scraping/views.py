@@ -14,6 +14,19 @@ import os
 import json
 import time
 
+
+def _is_admin(session_user: dict) -> bool:
+    """Verifica se o usuário é admin ou superadmin"""
+    if not session_user:
+        return False
+    # Verifica se é superadmin
+    if session_user.get('is_superadmin') or session_user.get('role') == 'SUPERADMIN':
+        return True
+    if getattr(settings, 'SUPERADMIN_USERNAME', '') and session_user.get('username') == settings.SUPERADMIN_USERNAME:
+        return True
+    # Verifica se é admin
+    return session_user.get('position') == 'Administrador' or session_user.get('role') == 'ADMIN'
+
 @require_http_methods(["POST"])
 @csrf_exempt
 def sync_calendar(request):

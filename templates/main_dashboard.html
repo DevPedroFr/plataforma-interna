@@ -1293,6 +1293,7 @@
 
     <script>
         const IS_SUPERADMIN = {{ current_user.is_superadmin|default:False|yesno:"true,false" }};
+        const IS_ADMIN = {{ is_admin|default:False|yesno:"true,false" }};
         document.addEventListener('DOMContentLoaded', function() {
             // Navegação entre abas
             const menuItems = document.querySelectorAll('.menu-item');
@@ -1990,13 +1991,22 @@
             const el = document.getElementById('stockKpis');
             if (!el || !summary) return;
             const currency = (v)=> new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(v||0);
-            el.innerHTML = `
+            
+            let html = `
                 <div class="card"><div class="card-header"><h3>Itens</h3><span class="card-icon"><i class="fa-solid fa-boxes-stacked"></i></span></div><div class="value">${summary.total_items||0}</div><div class="kpi-sub">Total cadastrados</div></div>
                 <div class="card"><div class="card-header"><h3>Em Falta</h3><span class="card-icon" style="background:#e57373"><i class="fa-solid fa-ban"></i></span></div><div class="value">${summary.items_out||0}</div><div class="kpi-sub">Zerados</div></div>
                 <div class="card"><div class="card-header"><h3>Estoque Baixo</h3><span class="card-icon" style="background:#ffb74d"><i class="fa-solid fa-triangle-exclamation"></i></span></div><div class="value">${summary.items_low||0}</div><div class="kpi-sub">Abaixo do mínimo</div></div>
-                <div class="card"><div class="card-header"><h3>Valor do Estoque</h3><span class="card-icon" style="background:#26a69a"><i class="fa-solid fa-coins"></i></span></div><div class="value">${currency(summary.inventory_value||0)}</div><div class="kpi-sub">Custo acumulado</div></div>
-                <div class="card"><div class="card-header"><h3>Receita Potencial</h3><span class="card-icon" style="background:#7c8cf0"><i class="fa-solid fa-hand-holding-dollar"></i></span></div><div class="value">${currency(summary.potential_revenue||0)}</div><div class="kpi-sub">Vendas possíveis</div></div>
             `;
+            
+            // Cards de valores financeiros apenas para admins
+            if (IS_ADMIN) {
+                html += `
+                    <div class="card"><div class="card-header"><h3>Valor do Estoque</h3><span class="card-icon" style="background:#26a69a"><i class="fa-solid fa-coins"></i></span></div><div class="value">${currency(summary.inventory_value||0)}</div><div class="kpi-sub">Custo acumulado</div></div>
+                    <div class="card"><div class="card-header"><h3>Receita Potencial</h3><span class="card-icon" style="background:#7c8cf0"><i class="fa-solid fa-hand-holding-dollar"></i></span></div><div class="value">${currency(summary.potential_revenue||0)}</div><div class="kpi-sub">Vendas possíveis</div></div>
+                `;
+            }
+            
+            el.innerHTML = html;
         }
 
         function updateStockList(vaccines) {
@@ -2534,20 +2544,34 @@
             const d = cardEl.dataset;
             const currency = (v)=> new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(parseFloat(v||0));
             const ageLabel = (m)=>{ m=parseInt(m||0); if(!m) return '—'; if(m>=12){const a=m/12; return `${Math.floor(a)} ${a>=24?'anos':'ano'}`;} return `${m} meses`; };
-            const html = `
+            
+            let html = `
                 <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;font-size:15px;line-height:1.8;">
                     <div style="padding:15px;background:#f8f9fa;border-radius:8px;"><strong style="display:block;color:#2a5298;margin-bottom:8px;">Laboratório:</strong> <span style="font-size:16px;">${d.lab||'N/A'}</span></div>
                     <div style="padding:15px;background:#f8f9fa;border-radius:8px;"><strong style="display:block;color:#2a5298;margin-bottom:8px;">Estoque Atual:</strong> <span style="font-size:16px;">${d.qty}</span></div>
                     <div style="padding:15px;background:#f8f9fa;border-radius:8px;"><strong style="display:block;color:#2a5298;margin-bottom:8px;">Disponível:</strong> <span style="font-size:16px;">${d.available}</span></div>
-                    <div style="padding:15px;background:#f8f9fa;border-radius:8px;"><strong style="display:block;color:#2a5298;margin-bottom:8px;">Estoque Mínimo:</strong> <span style="font-size:16px;">${d.min}</span></div>
+                    <div style="padding:15px;background:#f8f9fa;border-radius:8px;"><strong style="display:block;color:#2a5298;margin-bottom:8px;">Estoque Mínimo:</strong> <span style="font-size:16px;">${d.min}</span></div>`;
+            
+            // Informações financeiras apenas para admins
+            if (IS_ADMIN) {
+                html += `
                     <div style="padding:15px;background:#f8f9fa;border-radius:8px;"><strong style="display:block;color:#2a5298;margin-bottom:8px;">Preço de Compra:</strong> <span style="font-size:16px;">${currency(d.purchase)}</span></div>
                     <div style="padding:15px;background:#f8f9fa;border-radius:8px;"><strong style="display:block;color:#2a5298;margin-bottom:8px;">Preço de Venda:</strong> <span style="font-size:16px;">${currency(d.sale)}</span></div>
-                    <div style="padding:15px;background:#f8f9fa;border-radius:8px;"><strong style="display:block;color:#2a5298;margin-bottom:8px;">Margem Unitária:</strong> <span style="font-size:16px;">${currency(d.margin)}</span></div>
+                    <div style="padding:15px;background:#f8f9fa;border-radius:8px;"><strong style="display:block;color:#2a5298;margin-bottom:8px;">Margem Unitária:</strong> <span style="font-size:16px;">${currency(d.margin)}</span></div>`;
+            }
+            
+            html += `
                     <div style="padding:15px;background:#f8f9fa;border-radius:8px;"><strong style="display:block;color:#2a5298;margin-bottom:8px;">Idade Mínima:</strong> <span style="font-size:16px;">${ageLabel(d.minage)}</span></div>
-                    <div style="padding:15px;background:#f8f9fa;border-radius:8px;"><strong style="display:block;color:#2a5298;margin-bottom:8px;">Idade Máxima:</strong> <span style="font-size:16px;">${ageLabel(d.maxage)}</span></div>
+                    <div style="padding:15px;background:#f8f9fa;border-radius:8px;"><strong style="display:block;color:#2a5298;margin-bottom:8px;">Idade Máxima:</strong> <span style="font-size:16px;">${ageLabel(d.maxage)}</span></div>`;
+            
+            // Valores totais apenas para admins
+            if (IS_ADMIN) {
+                html += `
                     <div style="padding:15px;background:#e8f5e9;border-radius:8px;grid-column:1/3;"><strong style="display:block;color:#2e7d32;margin-bottom:8px;">Valor Total em Estoque:</strong> <span style="font-size:18px;font-weight:600;">${currency(d.invvalue)}</span></div>
-                    <div style="padding:15px;background:#e3f2fd;border-radius:8px;"><strong style="display:block;color:#1565c0;margin-bottom:8px;">Receita Potencial:</strong> <span style="font-size:18px;font-weight:600;">${currency(d.potrev)}</span></div>
-                </div>`;
+                    <div style="padding:15px;background:#e3f2fd;border-radius:8px;"><strong style="display:block;color:#1565c0;margin-bottom:8px;">Receita Potencial:</strong> <span style="font-size:18px;font-weight:600;">${currency(d.potrev)}</span></div>`;
+            }
+            
+            html += `</div>`;
             openGenericModal(d.name || 'Item de Estoque', html);
         }
 
