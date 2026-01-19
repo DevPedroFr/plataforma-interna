@@ -21,7 +21,7 @@ ALLOWED_HOSTS = ['*']
 
 CSRF_TRUSTED_ORIGINS = [
     'https://prettied-unsensitively-kerstin.ngrok-free.dev',
-    'https://plataforma-plataforma-jm.z5ydgz.easypanel.host',
+    'https://plataformavaccine.z5ydgz.easypanel.host',
 ]
 
 # vacination_system/settings.py
