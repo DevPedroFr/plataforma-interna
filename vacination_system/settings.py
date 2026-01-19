@@ -42,7 +42,6 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware'
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
@@ -182,4 +181,3 @@ STOCK_SCRAPER_AJAX_WAIT_SECONDS = 2.0  # Tempo de espera entre páginas
 # Se não definido em tempo de execução, a view usa BASE_DIR/data/vaccines.json
 INTERNAL_STOCK_JSON = str(BASE_DIR / 'data' / 'vaccines.json')
 
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
