@@ -160,7 +160,7 @@ if _google_creds_path and not _google_creds_path.exists():
         f"   Esperado em: {_google_creds_path}"
     )
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['plataforma-plataforma-jm.z5ydgz.easypanel.host']
 
 # Configurações do scraper de estoque
 STOCK_SCRAPER_MAX_PAGES = 100  # Número máximo de páginas a processar
