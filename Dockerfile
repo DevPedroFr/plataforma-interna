@@ -39,6 +39,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copiar código da aplicação
 COPY . .
 
+# Copiar e dar permissão ao script de entrypoint
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
 # Coletar arquivos estáticos
 RUN python manage.py collectstatic --noinput || true
 
@@ -46,4 +50,4 @@ RUN python manage.py collectstatic --noinput || true
 EXPOSE 8000
 
 # Comando padrão
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+CMD ["/entrypoint.sh"]
