@@ -1296,6 +1296,52 @@
         </div>
     </div>
 
+    <!-- Modal: Atualizar Item de Estoque -->
+    <div id="updateStockItemModal" style="display:none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.4); z-index: 3500;">
+        <div style="background:#fff; width: 800px; max-width: 96%; margin: 40px auto; padding: 24px; border-radius: 10px; box-shadow: 0 6px 18px rgba(0,0,0,0.18);">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                <h3>Atualizar Item de Estoque</h3>
+                <button class="btn" id="closeUpdateStockItemModal" style="background:#f5f5f5;">Fechar</button>
+            </div>
+            <div>
+                <div style="margin:10px 0;">
+                    <label style="display:block;font-weight:600;margin-bottom:6px;">Nome do Item</label>
+                    <input type="text" id="usi_name" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:6px;" readonly>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                    <div>
+                        <label style="display:block;font-weight:600;margin-bottom:6px;">Laboratório</label>
+                        <input type="text" id="usi_laboratory" placeholder="Ex.: Butantan" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:6px;">
+                    </div>
+                    <div>
+                        <label style="display:block;font-weight:600;margin-bottom:6px;">Estoque Mínimo</label>
+                        <input type="number" id="usi_min_stock" placeholder="Ex.: 10" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:6px;">
+                    </div>
+                    <div>
+                        <label style="display:block;font-weight:600;margin-bottom:6px;">Estoque Atual</label>
+                        <input type="number" id="usi_current_stock" placeholder="Ex.: 100" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:6px;">
+                    </div>
+                    <div>
+                        <label style="display:block;font-weight:600;margin-bottom:6px;">Disponível</label>
+                        <input type="number" id="usi_available_stock" placeholder="Ex.: 90" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:6px;">
+                    </div>
+                    <div>
+                        <label style="display:block;font-weight:600;margin-bottom:6px;">Preço de Compra</label>
+                        <input type="text" id="usi_purchase_price" placeholder="Ex.: 120,00" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:6px;">
+                    </div>
+                    <div>
+                        <label style="display:block;font-weight:600;margin-bottom:6px;">Preço de Venda</label>
+                        <input type="text" id="usi_sale_price" placeholder="Ex.: 199,90" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:6px;">
+                    </div>
+                </div>
+            </div>
+            <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:20px;">
+                <button class="btn" id="cancelUpdateStockItem" style="background:#f5f5f5;" onclick="document.getElementById('updateStockItemModal').style.display='none'">Cancelar</button>
+                <button class="btn btn-success" id="submitUpdateStockItemBtn">Salvar</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         const IS_SUPERADMIN = {{ current_user.is_superadmin|default:False|yesno:"true,false" }};
         const IS_ADMIN = {{ is_admin|default:False|yesno:"true,false" }};
@@ -2091,6 +2137,7 @@
                                 <span class="stock-status ${statusClass}" style="padding:4px 12px;font-size:0.7rem;">
                                     <i class="fas ${statusIcon}"></i> ${statusText}
                                 </span>
+                                
                             </div>
                         </div>
                         <div class="stock-details">
@@ -2279,6 +2326,80 @@
                     setTimeout(() => { location.reload(); }, 800);
                 } else {
                     showCustomNotification('❌ ' + (data.message || 'Erro ao criar item'), 'error');
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                showCustomNotification('❌ Erro na requisição', 'error');
+            });
+        }
+        // Abrir modal de atualização de estoque a partir do card
+        function openUpdateStockItemFromCard(btnEl) {
+            if (!IS_ADMIN) return;
+            const card = btnEl.closest('.stock-item');
+            if (!card) return;
+            document.getElementById('usi_name').value = card.dataset.name || '';
+            document.getElementById('usi_laboratory').value = card.dataset.lab || '';
+            document.getElementById('usi_min_stock').value = card.dataset.min || '';
+            document.getElementById('usi_current_stock').value = card.dataset.qty || '';
+            document.getElementById('usi_available_stock').value = card.dataset.available || '';
+            document.getElementById('usi_purchase_price').value = card.dataset.purchase || '';
+            document.getElementById('usi_sale_price').value = card.dataset.sale || '';
+            const modal = document.getElementById('updateStockItemModal');
+            if (modal) modal.style.display = 'block';
+        }
+
+        // Fechar modal de atualização
+        const closeUpdateStockItemModalBtn = document.getElementById('closeUpdateStockItemModal');
+        if (closeUpdateStockItemModalBtn) {
+            closeUpdateStockItemModalBtn.addEventListener('click', function(){
+                const m = document.getElementById('updateStockItemModal');
+                if (m) m.style.display = 'none';
+            });
+        }
+
+        // Wire submit button for update modal
+        const submitUpdateStockItemBtn = document.getElementById('submitUpdateStockItemBtn');
+        if (submitUpdateStockItemBtn) {
+            submitUpdateStockItemBtn.addEventListener('click', submitUpdateStockItem);
+        }
+
+        // Submeter atualização de item de estoque (JSON interno)
+        function submitUpdateStockItem() {
+            if (!IS_ADMIN) { showCustomNotification('❌ Apenas administradores podem atualizar.', 'error'); return; }
+            const name = (document.getElementById('usi_name').value || '').trim();
+            const laboratory = (document.getElementById('usi_laboratory').value || '').trim();
+            const min_stock = document.getElementById('usi_min_stock').value;
+            const current_stock = document.getElementById('usi_current_stock').value;
+            const available_stock = document.getElementById('usi_available_stock').value;
+            const purchase_price = (document.getElementById('usi_purchase_price').value || '').trim();
+            const sale_price = (document.getElementById('usi_sale_price').value || '').trim();
+
+            if (!name) { showCustomNotification('❌ Nome do item não informado', 'error'); return; }
+
+            const payload = { name };
+            if (laboratory) payload.laboratory = laboratory;
+            if (min_stock) payload.min_stock = min_stock;
+            if (current_stock) payload.current_stock = current_stock;
+            if (available_stock) payload.available_stock = available_stock;
+            if (purchase_price) payload.purchase_price = purchase_price;
+            if (sale_price) payload.sale_price = sale_price;
+
+            fetch('/scraping/stock-item/update/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrfTokenValue() },
+                body: JSON.stringify(payload)
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    showCustomNotification('✅ Item atualizado com sucesso', 'success');
+                    const m = document.getElementById('updateStockItemModal');
+                    if (m) m.style.display = 'none';
+                    // Atualiza lista
+                    loadStockData();
+                } else {
+                    showCustomNotification('❌ ' + (data.message || 'Erro ao atualizar item'), 'error');
                 }
             })
             .catch(err => {
@@ -2578,8 +2699,38 @@
                     <div style="padding:15px;background:#e3f2fd;border-radius:8px;"><strong style="display:block;color:#1565c0;margin-bottom:8px;">Receita Potencial:</strong> <span style="font-size:18px;font-weight:600;">${currency(d.potrev)}</span></div>`;
             }
             
+            // Botão de edição apenas no modal expandido (admins)
+            if (IS_ADMIN) {
+                html += `<div style="grid-column:1/-1;text-align:right;margin-top:10px;">
+                    <button class="btn btn-primary" id="openUpdateStockItemFromExpandedBtn"><i class="fas fa-pen"></i> Editar</button>
+                </div>`;
+            }
+
             html += `</div>`;
+            // Guarda dados para uso na edição
+            window._lastStockData = d;
             openGenericModal(d.name || 'Item de Estoque', html);
+
+            // Wire do botão de edição (se existir)
+            const editBtn = document.getElementById('openUpdateStockItemFromExpandedBtn');
+            if (editBtn) {
+                editBtn.addEventListener('click', openUpdateStockItemFromExpanded);
+            }
+        }
+
+        // Abrir modal de atualização a partir da visão expandida
+        function openUpdateStockItemFromExpanded(){
+            if (!IS_ADMIN) return;
+            const d = window._lastStockData || {};
+            document.getElementById('usi_name').value = d.name || '';
+            document.getElementById('usi_laboratory').value = d.lab || '';
+            document.getElementById('usi_min_stock').value = d.min || '';
+            document.getElementById('usi_current_stock').value = d.qty || '';
+            document.getElementById('usi_available_stock').value = d.available || '';
+            document.getElementById('usi_purchase_price').value = d.purchase || '';
+            document.getElementById('usi_sale_price').value = d.sale || '';
+            const modal = document.getElementById('updateStockItemModal');
+            if (modal) modal.style.display = 'block';
         }
 
         // Submeter criação de usuário

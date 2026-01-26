@@ -13,6 +13,7 @@ from django.conf import settings
 import os
 import json
 import time
+from datetime import datetime, timezone
 
 
 def _is_admin(session_user: dict) -> bool:
@@ -209,6 +210,131 @@ def stock_data(request):
             'status': 'error',
             'message': f'Erro ao carregar dados: {str(e)}'
         }, status=500)
+
+
+@require_http_methods(["POST"])
+def update_stock_item(request):
+    """Atualiza um item no estoque interno (JSON).
+
+    Requer usuário autenticado e com permissão de admin.
+    Campos aceitos (opcionais): laboratory, current_stock, available_stock, min_stock,
+    purchase_price, sale_price, min_age_months, max_age_months.
+    Identificação do item: name (obrigatório).
+    """
+    if not request.session.get('user_authenticated'):
+        return JsonResponse({'status': 'error', 'message': 'Não autenticado'}, status=401)
+
+    session_user = request.session.get('user', {}) or {}
+    if not _is_admin(session_user):
+        return JsonResponse({'status': 'error', 'message': 'Apenas administradores podem atualizar o estoque.'}, status=403)
+
+    try:
+        try:
+            payload = json.loads((request.body or b'').decode('utf-8') or '{}')
+        except Exception:
+            return JsonResponse({'status': 'error', 'message': 'JSON inválido.'}, status=400)
+
+        name = (payload.get('name') or '').strip()
+        if not name:
+            return JsonResponse({'status': 'error', 'message': 'Campo "name" é obrigatório.'}, status=400)
+
+        json_path = getattr(settings, 'INTERNAL_STOCK_JSON', None)
+        if not json_path:
+            json_path = os.path.join(settings.BASE_DIR, 'data', 'vaccines.json')
+
+        if not os.path.exists(json_path):
+            return JsonResponse({'status': 'error', 'message': f'Arquivo de estoque não encontrado: {json_path}'}, status=404)
+
+        with open(json_path, 'r', encoding='utf-8') as f:
+            doc = json.load(f) or {}
+
+        items = doc.get('items', [])
+        if not isinstance(items, list):
+            return JsonResponse({'status': 'error', 'message': 'Formato inválido do arquivo de estoque (items).'}, status=500)
+
+        needle = name.casefold()
+        idx = next((i for i, it in enumerate(items) if (it.get('name') or '').strip().casefold() == needle), None)
+        if idx is None:
+            return JsonResponse({'status': 'error', 'message': 'Item não encontrado no estoque interno.'}, status=404)
+
+        item = items[idx]
+
+        def to_int(v, *, field_name: str):
+            if v in (None, ''):
+                return None
+            try:
+                iv = int(v)
+            except (TypeError, ValueError):
+                raise ValueError(f'Campo "{field_name}" deve ser inteiro.')
+            if iv < 0:
+                raise ValueError(f'Campo "{field_name}" não pode ser negativo.')
+            return iv
+
+        def to_float(v, *, field_name: str):
+            if v in (None, ''):
+                return None
+            try:
+                fv = float(str(v).replace(',', '.'))
+            except (TypeError, ValueError):
+                raise ValueError(f'Campo "{field_name}" deve ser numérico.')
+            if fv < 0:
+                raise ValueError(f'Campo "{field_name}" não pode ser negativo.')
+            return round(fv, 2)
+
+        # Strings
+        if 'laboratory' in payload:
+            item['laboratory'] = (payload.get('laboratory') or '').strip()
+
+        # Inteiros
+        if 'current_stock' in payload:
+            item['current_stock'] = to_int(payload.get('current_stock'), field_name='current_stock')
+        if 'available_stock' in payload:
+            item['available_stock'] = to_int(payload.get('available_stock'), field_name='available_stock')
+        if 'min_stock' in payload:
+            item['min_stock'] = to_int(payload.get('min_stock'), field_name='min_stock')
+        if 'min_age_months' in payload:
+            item['min_age_months'] = to_int(payload.get('min_age_months'), field_name='min_age_months')
+        if 'max_age_months' in payload:
+            item['max_age_months'] = to_int(payload.get('max_age_months'), field_name='max_age_months')
+
+        # Preços
+        if 'purchase_price' in payload:
+            item['purchase_price'] = to_float(payload.get('purchase_price'), field_name='purchase_price')
+        if 'sale_price' in payload:
+            item['sale_price'] = to_float(payload.get('sale_price'), field_name='sale_price')
+
+        # Regras de consistência
+        if item.get('current_stock') is not None and item.get('available_stock') is None:
+            item['available_stock'] = item.get('current_stock')
+        if item.get('available_stock') is not None and item.get('current_stock') is None:
+            item['current_stock'] = item.get('available_stock')
+        if (item.get('available_stock') is not None) and (item.get('current_stock') is not None):
+            if int(item['available_stock']) > int(item['current_stock']):
+                return JsonResponse({'status': 'error', 'message': 'available_stock não pode ser maior que current_stock.'}, status=400)
+
+        # Salva de forma atômica
+        items[idx] = item
+        doc['items'] = items
+        doc['last_updated'] = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
+        doc['source'] = doc.get('source') or 'internal-inventory'
+        doc['total_items'] = len(items)
+
+        tmp_path = f"{json_path}.tmp"
+        with open(tmp_path, 'w', encoding='utf-8') as f:
+            json.dump(doc, f, ensure_ascii=False, indent=2)
+        os.replace(tmp_path, json_path)
+
+        return JsonResponse({
+            'status': 'success',
+            'message': 'Item de estoque atualizado com sucesso.',
+            'item': item,
+            'last_updated': doc.get('last_updated'),
+        })
+
+    except ValueError as ve:
+        return JsonResponse({'status': 'error', 'message': str(ve)}, status=400)
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': f'Erro ao atualizar item: {str(e)}'}, status=500)
 
 @require_http_methods(["POST"])
 @csrf_exempt

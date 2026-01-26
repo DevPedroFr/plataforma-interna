@@ -12,6 +12,7 @@ urlpatterns = [
     # Estoque
     path('sync-stock/', views.sync_stock, name='sync_stock'),
     path('stock-data/', views.stock_data, name='stock_data'),
+    path('stock-item/update/', views.update_stock_item, name='update_stock_item'),
     
     # Usuários recentes
     path('sync-recent-users/', views.sync_recent_users, name='sync_recent_users'),

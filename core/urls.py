@@ -21,4 +21,5 @@ urlpatterns = [
     path('appointments-by-date/', views.list_appointments_by_date, name='list_appointments_by_date'),
     # Vaccines (stock)
     path('vaccine/create/', views.create_vaccine, name='create_vaccine'),
+    path('vaccine/<int:vaccine_id>/update/', views.update_vaccine, name='update_vaccine'),
 ]

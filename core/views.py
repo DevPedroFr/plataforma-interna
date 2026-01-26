@@ -722,3 +722,127 @@ def create_vaccine(request):
             'status': 'error',
             'message': f'Erro ao criar item de estoque: {str(e)}'
         }, status=500)
+
+# ===================== ESTOQUE: ATUALIZAR VACINA =====================
+@require_http_methods(["POST", "PATCH"])
+def update_vaccine(request, vaccine_id: int):
+    """Atualiza campos de um item de estoque (Vaccine).
+
+    Campos aceitos (opcionais):
+    - name, laboratory, lot_number, expiry_date
+    - current_stock, available_stock, minimum_stock/min_stock
+    - sale_price, purchase_price
+
+    Regras:
+    - Se apenas um entre current_stock/available_stock for fornecido, o outro mantém valor atual.
+    - available_stock não pode ser maior que current_stock.
+    - expiry_date aceita formatos YYYY-MM-DD ou DD/MM/YYYY.
+    """
+    try:
+        vaccine = Vaccine.objects.filter(id=vaccine_id).first()
+        if not vaccine:
+            return JsonResponse({'status': 'error', 'message': 'Vacina não encontrada.'}, status=404)
+
+        payload = request.POST if request.method == 'POST' else None
+        if request.method == 'PATCH':
+            # Para PATCH via JSON
+            import json
+            try:
+                payload = json.loads(request.body.decode('utf-8') or '{}')
+            except Exception:
+                payload = {}
+
+        def to_int(v, default=None):
+            try:
+                return int(v)
+            except (TypeError, ValueError):
+                return default
+
+        def to_decimal(v):
+            from decimal import Decimal, InvalidOperation
+            try:
+                return Decimal(str(v).replace(',', '.')) if v not in (None, '') else None
+            except InvalidOperation:
+                return None
+
+        # Campos textuais
+        name = (payload.get('name') or '').strip() if isinstance(payload, dict) else (payload.get('name') or '').strip()
+        laboratory = (payload.get('laboratory') or '').strip() if isinstance(payload, dict) else (payload.get('laboratory') or '').strip()
+        lot_number = (payload.get('lot_number') or '').strip() if isinstance(payload, dict) else (payload.get('lot_number') or '').strip()
+        expiry_date = (payload.get('expiry_date') or '').strip() if isinstance(payload, dict) else (payload.get('expiry_date') or '').strip()
+
+        if name:
+            vaccine.name = name
+        if laboratory:
+            vaccine.laboratory = laboratory
+        if lot_number:
+            vaccine.lot_number = lot_number
+
+        # Datas
+        if expiry_date:
+            try:
+                if '-' in expiry_date:
+                    vaccine.expiry_date = datetime.strptime(expiry_date, '%Y-%m-%d').date()
+                else:
+                    vaccine.expiry_date = datetime.strptime(expiry_date, '%d/%m/%Y').date()
+            except Exception:
+                pass
+
+        # Quantidades
+        current_stock_in = payload.get('current_stock') if isinstance(payload, dict) else payload.get('current_stock')
+        available_stock_in = payload.get('available_stock') if isinstance(payload, dict) else payload.get('available_stock')
+        min_stock_in = payload.get('minimum_stock') if isinstance(payload, dict) else payload.get('minimum_stock')
+        if min_stock_in is None:
+            min_stock_in = payload.get('min_stock') if isinstance(payload, dict) else payload.get('min_stock')
+
+        new_current = to_int(current_stock_in, default=vaccine.current_stock)
+        new_available = to_int(available_stock_in, default=vaccine.available_stock)
+        new_min = to_int(min_stock_in, default=vaccine.minimum_stock)
+
+        # Preços
+        sale_price_in = payload.get('sale_price') if isinstance(payload, dict) else payload.get('sale_price')
+        purchase_price_in = payload.get('purchase_price') if isinstance(payload, dict) else payload.get('purchase_price')
+        new_sale = to_decimal(sale_price_in)
+        new_purchase = to_decimal(purchase_price_in)
+
+        # Regra de estoque: available <= current
+        if new_available is not None and new_current is not None and int(new_available) > int(new_current):
+            return JsonResponse({'status': 'error', 'message': 'available_stock não pode ser maior que current_stock.'}, status=400)
+
+        # Atribuições
+        if new_current is not None:
+            vaccine.current_stock = new_current
+        if new_available is not None:
+            vaccine.available_stock = new_available
+        if new_min is not None:
+            vaccine.minimum_stock = new_min
+            vaccine.min_stock = new_min
+        if new_sale is not None:
+            vaccine.sale_price = new_sale
+        if new_purchase is not None:
+            vaccine.purchase_price = new_purchase
+
+        vaccine.save()
+
+        return JsonResponse({
+            'status': 'success',
+            'message': 'Vacina atualizada com sucesso.',
+            'vaccine': {
+                'id': vaccine.id,
+                'name': vaccine.name,
+                'laboratory': vaccine.laboratory,
+                'lot_number': vaccine.lot_number,
+                'expiry_date': vaccine.expiry_date.isoformat() if vaccine.expiry_date else None,
+                'current_stock': vaccine.current_stock,
+                'available_stock': vaccine.available_stock,
+                'minimum_stock': vaccine.minimum_stock,
+                'sale_price': str(vaccine.sale_price) if vaccine.sale_price is not None else None,
+                'purchase_price': str(vaccine.purchase_price) if vaccine.purchase_price is not None else None,
+            }
+        })
+
+    except Exception as e:
+        return JsonResponse({
+            'status': 'error',
+            'message': f'Erro ao atualizar item de estoque: {str(e)}'
+        }, status=500)
