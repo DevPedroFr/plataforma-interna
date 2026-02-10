@@ -22,7 +22,28 @@ ALLOWED_HOSTS = ['*']
 CSRF_TRUSTED_ORIGINS = [
     'https://prettied-unsensitively-kerstin.ngrok-free.dev',
     'https://plataformavaccine.z5ydgz.easypanel.host',
+    'http://plataformavaccine.z5ydgz.easypanel.host',
 ]
+
+# ============================================================================
+# CONFIGURAÇÕES DE SEGURANÇA HTTPS (Para Easypanel e iOS)
+# ============================================================================
+# Easypanel usa proxy reverso (Nginx) que adiciona cabeçalhos HTTPS
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# Em produção, forçar HTTPS
+if not DEBUG:
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_HSTS_SECONDS = 31536000  # 1 ano
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+else:
+    # Em desenvolvimento, permitir HTTP
+    SECURE_SSL_REDIRECT = False
+    SESSION_COOKIE_SECURE = False
+    CSRF_COOKIE_SECURE = False
 
 # vacination_system/settings.py
 INSTALLED_APPS = [
@@ -95,6 +116,15 @@ SESSION_COOKIE_NAME = 'vaccinecare_sessionid'
 # Segurança do cookie
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = 'Lax'
+
+# Configurações CSRF para compatibilidade com iOS
+CSRF_COOKIE_HTTPONLY = False  # Precisa ser False para JS poder ler
+CSRF_COOKIE_SAMESITE = 'Lax'
+CSRF_USE_SESSIONS = False
+CSRF_COOKIE_NAME = 'csrftoken'
+
+# Permitir iframes do mesmo domínio (necessário para alguns recursos)
+X_FRAME_OPTIONS = 'SAMEORIGIN'
 
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
