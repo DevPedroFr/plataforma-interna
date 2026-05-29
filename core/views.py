@@ -239,8 +239,14 @@ def dashboard(request):
 
 
 @csrf_exempt
-@require_http_methods(["POST"])
+@require_http_methods(["GET", "POST"])
 def receive_whatsapp(request):
+    if request.method == "GET":
+        return JsonResponse({
+            'status': 'ok',
+            'message': 'Endpoint ativo. Envie um POST com JSON para registrar mensagens.',
+        })
+
     try:
         body = json.loads(request.body or '{}')
     except JSONDecodeError:
