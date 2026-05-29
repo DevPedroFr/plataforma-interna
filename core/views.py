@@ -1,21 +1,26 @@
 # core/views.py
-from django.shortcuts import render, redirect
-from django.http import JsonResponse
-from .models import User, Appointment, Vaccine, ChatMessage
-from django.db.models import Count
+import calendar
+import json
 import random
 from datetime import datetime, timedelta
+from json import JSONDecodeError
+
+from django.conf import settings
+from django.db.models import Count
+from django.http import JsonResponse
+from django.shortcuts import render, redirect
 from django.utils import timezone
-from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_http_methods
 from django.utils.decorators import method_decorator
 from django.views import View
-from web_scraping.services.calendar_scraper import CalendarScraper
-from web_scraping.utils.browser_manager import BrowserManager
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
+
 from user_auth.decorators import login_required
 from user_auth.user_manager import user_manager
-import calendar
-from django.conf import settings
+from web_scraping.services.calendar_scraper import CalendarScraper
+from web_scraping.utils.browser_manager import BrowserManager
+
+from .models import Appointment, ChatMessage, User, Vaccine, WhatsappNotification
 
 
 def _is_admin(session_user: dict) -> bool:
@@ -231,6 +236,31 @@ def dashboard(request):
         'next_year': current_year if current_month < 12 else current_year + 1,
     }
     return render(request, 'main_dashboard.html', context)
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def receive_whatsapp(request):
+    try:
+        body = json.loads(request.body or '{}')
+    except JSONDecodeError:
+        return JsonResponse({'error': 'invalid_json'}, status=400)
+
+    phone = body.get('phone')
+    message = body.get('message')
+    instance = body.get('instance')
+
+    if not phone or not message or not instance:
+        return JsonResponse({'error': 'missing_fields'}, status=400)
+
+    WhatsappNotification.objects.create(
+        name=body.get('name', ''),
+        phone=phone,
+        message=message,
+        instance=instance,
+    )
+
+    return JsonResponse({'status': 'ok'})
 
 @method_decorator(csrf_exempt, name='dispatch')
 class SyncCalendarView(View):

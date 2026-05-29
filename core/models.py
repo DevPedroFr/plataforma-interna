@@ -63,3 +63,18 @@ class ChatMessage(models.Model):
 
     def __str__(self):
         return f"{self.user.name if self.user else 'Unknown'} - {self.timestamp}"
+
+
+class WhatsappNotification(models.Model):
+    name = models.CharField(max_length=255, blank=True)
+    phone = models.CharField(max_length=30)
+    message = models.TextField()
+    instance = models.CharField(max_length=100)
+    created_at = models.DateTimeField(auto_now_add=True)
+    read = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.phone} - {self.created_at:%d/%m/%Y %H:%M}"
