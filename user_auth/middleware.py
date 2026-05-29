@@ -17,6 +17,7 @@ class AuthenticationMiddleware:
         '/auth/login/',
         '/auth/logout/',
         '/auth/change-password/',
+        '/api/receive-whatsapp',
         '/api/receive-whatsapp/',
         '/admin/',  # O Django admin cuida da própria autenticação
     ]
