@@ -262,6 +262,53 @@
             box-shadow: 0 8px 18px rgba(42,82,152,0.30);
         }
 
+        .whatsapp-live-list {
+            display: grid;
+            gap: 14px;
+        }
+
+        .whatsapp-live-item {
+            border: 1px solid #e7edf6;
+            border-left: 4px solid #1dbf73;
+            border-radius: 12px;
+            background: linear-gradient(180deg, #ffffff 0%, #f9fcff 100%);
+            padding: 16px;
+            box-shadow: 0 8px 20px rgba(31, 45, 61, 0.06);
+        }
+
+        .whatsapp-live-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+
+        .whatsapp-live-name {
+            font-weight: 700;
+            color: #1e3c72;
+        }
+
+        .whatsapp-live-meta {
+            font-size: 0.82rem;
+            color: #66758d;
+        }
+
+        .whatsapp-live-message {
+            color: #334155;
+            line-height: 1.5;
+            word-break: break-word;
+        }
+
+        .whatsapp-live-empty {
+            padding: 28px;
+            text-align: center;
+            color: #7b8798;
+            background: #f8fbff;
+            border: 1px dashed #c9d7e8;
+            border-radius: 12px;
+        }
+
         .btn-primary:hover {
             background-color: #1e3c72;
         }
@@ -933,6 +980,19 @@
                         </div>
                         {% endif %}
                     </div>
+
+                    <div class="card" style="margin-top:30px;padding:24px;">
+                        <div class="card-header" style="margin-bottom:20px;">
+                            <div>
+                                <h3 style="font-size:1.1rem;color:#2c3e50;margin:0;">Mensagens Recebidas no WhatsApp</h3>
+                                <p style="margin:6px 0 0 0;color:#66758d;font-size:0.9rem;">Atualização automática a cada 3 segundos</p>
+                            </div>
+                            <span class="card-icon" style="background:#1dbf73; box-shadow: 0 8px 20px rgba(29,191,115,0.28);"><i class="fa-brands fa-whatsapp"></i></span>
+                        </div>
+                        <div id="whatsappLiveList" class="whatsapp-live-list">
+                            <div class="whatsapp-live-empty">Aguardando novas mensagens do webhook.</div>
+                        </div>
+                    </div>
                 </div>
 
 
@@ -1342,9 +1402,52 @@
         </div>
     </div>
 
+    <div id="whatsappPopupModal" style="display:none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(15,23,42,0.45); z-index: 3600; backdrop-filter: blur(4px);">
+        <div style="background:#fff; width:560px; max-width:94%; margin: 70px auto; padding: 28px; border-radius: 18px; box-shadow: 0 20px 48px rgba(15,23,42,0.24); border-top: 6px solid #1dbf73;">
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:14px; margin-bottom:20px;">
+                <div>
+                    <div style="font-size:0.82rem; text-transform:uppercase; letter-spacing:0.08em; color:#1dbf73; font-weight:700;">Nova Mensagem</div>
+                    <h3 style="margin:6px 0 0 0; color:#1e3c72;">WhatsApp recebido no dashboard</h3>
+                </div>
+                <button class="btn" id="closeWhatsappPopupModal" style="background:#f3f6fb; color:#334155;">Fechar</button>
+            </div>
+            <div style="display:grid; gap:14px;">
+                <div style="background:#f8fbff; border-radius:12px; padding:14px 16px;">
+                    <div style="font-size:0.8rem; color:#66758d; margin-bottom:4px;">Nome</div>
+                    <div id="whatsappPopupName" style="font-size:1.05rem; font-weight:700; color:#0f172a;">-</div>
+                </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+                    <div style="background:#f8fbff; border-radius:12px; padding:14px 16px;">
+                        <div style="font-size:0.8rem; color:#66758d; margin-bottom:4px;">Telefone</div>
+                        <div id="whatsappPopupPhone" style="font-weight:600; color:#0f172a;">-</div>
+                    </div>
+                    <div style="background:#f8fbff; border-radius:12px; padding:14px 16px;">
+                        <div style="font-size:0.8rem; color:#66758d; margin-bottom:4px;">Instância</div>
+                        <div id="whatsappPopupInstance" style="font-weight:600; color:#0f172a;">-</div>
+                    </div>
+                </div>
+                <div style="background:#f8fbff; border-radius:12px; padding:14px 16px;">
+                    <div style="font-size:0.8rem; color:#66758d; margin-bottom:4px;">Mensagem</div>
+                    <div id="whatsappPopupMessage" style="color:#1e293b; line-height:1.6; white-space:pre-wrap;">-</div>
+                </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+                    <div style="background:#f8fbff; border-radius:12px; padding:14px 16px;">
+                        <div style="font-size:0.8rem; color:#66758d; margin-bottom:4px;">Tipo</div>
+                        <div id="whatsappPopupType" style="font-weight:600; color:#0f172a;">-</div>
+                    </div>
+                    <div style="background:#f8fbff; border-radius:12px; padding:14px 16px;">
+                        <div style="font-size:0.8rem; color:#66758d; margin-bottom:4px;">Recebido em</div>
+                        <div id="whatsappPopupCreatedAt" style="font-weight:600; color:#0f172a;">-</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         const IS_SUPERADMIN = {{ current_user.is_superadmin|default:False|yesno:"true,false" }};
         const IS_ADMIN = {{ is_admin|default:False|yesno:"true,false" }};
+        let lastWhatsappNotificationId = null;
         document.addEventListener('DOMContentLoaded', function() {
             // Navegação entre abas
             const menuItems = document.querySelectorAll('.menu-item');
@@ -1498,6 +1601,14 @@
                     if (modal) modal.style.display = 'none';
                 });
             }
+
+            const closeWhatsappPopupModalBtn = document.getElementById('closeWhatsappPopupModal');
+            if (closeWhatsappPopupModalBtn) {
+                closeWhatsappPopupModalBtn.addEventListener('click', closeWhatsappPopup);
+            }
+
+            fetchWhatsappNotifications(true);
+            window.setInterval(() => fetchWhatsappNotifications(false), 3000);
         });
         
         function renderKpiCharts() {
@@ -2456,6 +2567,106 @@
                             type === 'error' ? 'alert("❌ ' + message + '")' : 
                             'alert("ℹ️ ' + message + '")';
             eval(alertClass);
+        }
+
+        function fetchWhatsappNotifications(isInitialLoad = false) {
+            fetch('{% url "core:get_notifications" %}', {
+                method: 'GET',
+                headers: { 'Accept': 'application/json' }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Falha ao buscar notificações');
+                }
+                return response.json();
+            })
+            .then(data => {
+                renderWhatsappNotifications(data || []);
+
+                if (!Array.isArray(data) || data.length === 0) {
+                    return;
+                }
+
+                const newestNotification = data[0];
+                if (isInitialLoad || lastWhatsappNotificationId === null) {
+                    lastWhatsappNotificationId = newestNotification.id;
+                    return;
+                }
+
+                if (newestNotification.id > lastWhatsappNotificationId) {
+                    lastWhatsappNotificationId = newestNotification.id;
+                    showWhatsappPopup(newestNotification);
+                    showCustomNotification('✅ Nova mensagem recebida no WhatsApp', 'success');
+                    return;
+                }
+
+                lastWhatsappNotificationId = Math.max(lastWhatsappNotificationId, newestNotification.id);
+            })
+            .catch(error => {
+                console.error('Erro ao carregar notificações do WhatsApp:', error);
+            });
+        }
+
+        function renderWhatsappNotifications(notifications) {
+            const list = document.getElementById('whatsappLiveList');
+            if (!list) return;
+
+            if (!Array.isArray(notifications) || notifications.length === 0) {
+                list.innerHTML = '<div class="whatsapp-live-empty">Nenhuma mensagem recebida ainda.</div>';
+                return;
+            }
+
+            list.innerHTML = notifications.map((notification) => {
+                const name = escapeHtml(notification.name || 'Contato não identificado');
+                const phone = escapeHtml(notification.phone || '-');
+                const message = escapeHtml(notification.message || 'Sem conteúdo');
+                const instance = escapeHtml(notification.instance || '-');
+                const createdAt = escapeHtml(notification.created_at_display || '-');
+                const messageType = escapeHtml(notification.message_type || 'text');
+
+                return `
+                    <div class="whatsapp-live-item">
+                        <div class="whatsapp-live-item-header">
+                            <div>
+                                <div class="whatsapp-live-name">${name}</div>
+                                <div class="whatsapp-live-meta">${phone} · ${instance}</div>
+                            </div>
+                            <div class="whatsapp-live-meta">${createdAt}</div>
+                        </div>
+                        <div class="whatsapp-live-message">${message}</div>
+                        <div class="whatsapp-live-meta" style="margin-top:10px;">Tipo: ${messageType}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function showWhatsappPopup(notification) {
+            const modal = document.getElementById('whatsappPopupModal');
+            if (!modal) return;
+
+            document.getElementById('whatsappPopupName').textContent = notification.name || 'Contato não identificado';
+            document.getElementById('whatsappPopupPhone').textContent = notification.phone || '-';
+            document.getElementById('whatsappPopupInstance').textContent = notification.instance || '-';
+            document.getElementById('whatsappPopupMessage').textContent = notification.message || 'Sem conteúdo';
+            document.getElementById('whatsappPopupType').textContent = notification.message_type || 'text';
+            document.getElementById('whatsappPopupCreatedAt').textContent = notification.created_at_display || '-';
+            modal.style.display = 'block';
+        }
+
+        function closeWhatsappPopup() {
+            const modal = document.getElementById('whatsappPopupModal');
+            if (modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        function escapeHtml(value) {
+            return String(value)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
         }
 
         // Visualizar detalhes de agendamento (Dashboard)

@@ -70,6 +70,8 @@ class WhatsappNotification(models.Model):
     phone = models.CharField(max_length=30)
     message = models.TextField()
     instance = models.CharField(max_length=100)
+    message_type = models.CharField(max_length=50, blank=True, default='text')
+    message_id = models.CharField(max_length=150, blank=True, default='')
     created_at = models.DateTimeField(auto_now_add=True)
     read = models.BooleanField(default=False)
 

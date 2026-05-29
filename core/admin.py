@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import User, Vaccine, Appointment, ChatMessage
+from .models import User, Vaccine, Appointment, ChatMessage, WhatsappNotification
 
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
@@ -28,3 +28,10 @@ class ChatMessageAdmin(admin.ModelAdmin):
     def message_short(self, obj):
         return obj.message[:50] + '...' if len(obj.message) > 50 else obj.message
     message_short.short_description = 'Mensagem'
+
+
+@admin.register(WhatsappNotification)
+class WhatsappNotificationAdmin(admin.ModelAdmin):
+    list_display = ['name', 'phone', 'instance', 'message_type', 'message_id', 'read', 'created_at']
+    list_filter = ['instance', 'message_type', 'read', 'created_at']
+    search_fields = ['name', 'phone', 'message', 'message_id']

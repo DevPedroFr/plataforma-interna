@@ -264,9 +264,33 @@ def receive_whatsapp(request):
         phone=phone,
         message=message,
         instance=instance,
+        message_type=body.get('message_type', 'text') or 'text',
+        message_id=body.get('message_id', ''),
     )
 
     return JsonResponse({'status': 'ok'})
+
+
+@login_required
+@require_http_methods(["GET"])
+def get_notifications(request):
+    notifications = list(WhatsappNotification.objects.order_by('-created_at')[:20])
+    data = [
+        {
+            'id': notification.id,
+            'name': notification.name,
+            'phone': notification.phone,
+            'message': notification.message,
+            'instance': notification.instance,
+            'message_type': notification.message_type,
+            'message_id': notification.message_id,
+            'read': notification.read,
+            'created_at': timezone.localtime(notification.created_at).isoformat(),
+            'created_at_display': timezone.localtime(notification.created_at).strftime('%d/%m/%Y %H:%M'),
+        }
+        for notification in notifications
+    ]
+    return JsonResponse(data, safe=False)
 
 @method_decorator(csrf_exempt, name='dispatch')
 class SyncCalendarView(View):

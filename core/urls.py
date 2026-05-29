@@ -7,6 +7,7 @@ app_name = 'core'
 
 urlpatterns = [
     path('', views.dashboard, name='dashboard'),
+    path('api/notifications/', views.get_notifications, name='get_notifications'),
     path('api/receive-whatsapp', views.receive_whatsapp, name='receive_whatsapp_no_slash'),
     path('api/receive-whatsapp/', views.receive_whatsapp, name='receive_whatsapp'),
     path('calendar/', views.calendar_view, name='calendar'),
