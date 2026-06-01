@@ -68,9 +68,11 @@ class ChatMessage(models.Model):
 class WhatsappNotification(models.Model):
     QUEUE_STATUS_PENDING = 'pending'
     QUEUE_STATUS_ASSIGNED = 'assigned'
+    QUEUE_STATUS_COMPLETED = 'completed'
     QUEUE_STATUS_CHOICES = [
         (QUEUE_STATUS_PENDING, 'Pendente'),
         (QUEUE_STATUS_ASSIGNED, 'Em atendimento'),
+        (QUEUE_STATUS_COMPLETED, 'Finalizado'),
     ]
 
     name = models.CharField(max_length=255, blank=True)

@@ -344,6 +344,38 @@ def assign_notification(request, notification_id):
 
     return JsonResponse({'status': 'ok', 'notification': _serialize_notification(notification)})
 
+
+@login_required
+@require_http_methods(["POST"])
+def complete_notification(request, notification_id):
+    session_user = request.session.get('user', {}) or {}
+    username = (session_user.get('username') or request.session.get('username') or '').strip()
+
+    if not username:
+        return JsonResponse({'error': 'user_not_identified'}, status=403)
+
+    with transaction.atomic():
+        try:
+            notification = WhatsappNotification.objects.select_for_update().get(pk=notification_id)
+        except WhatsappNotification.DoesNotExist:
+            return JsonResponse({'error': 'notification_not_found'}, status=404)
+
+        if notification.queue_status == WhatsappNotification.QUEUE_STATUS_COMPLETED:
+            return JsonResponse({'status': 'ok', 'notification': _serialize_notification(notification)})
+
+        if notification.assigned_to_username != username:
+            return JsonResponse({
+                'error': 'not_assigned_to_user',
+                'assigned_to_name': notification.assigned_to_name,
+                'assigned_to_username': notification.assigned_to_username,
+            }, status=403)
+
+        notification.queue_status = WhatsappNotification.QUEUE_STATUS_COMPLETED
+        notification.read = True
+        notification.save(update_fields=['queue_status', 'read'])
+
+    return JsonResponse({'status': 'ok', 'notification': _serialize_notification(notification)})
+
 @method_decorator(csrf_exempt, name='dispatch')
 class SyncCalendarView(View):
     def post(self, request):

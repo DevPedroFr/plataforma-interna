@@ -9,6 +9,7 @@ urlpatterns = [
     path('', views.dashboard, name='dashboard'),
     path('api/notifications/', views.get_notifications, name='get_notifications'),
     path('api/notifications/<int:notification_id>/assign/', views.assign_notification, name='assign_notification'),
+    path('api/notifications/<int:notification_id>/complete/', views.complete_notification, name='complete_notification'),
     path('api/receive-whatsapp', views.receive_whatsapp, name='receive_whatsapp_no_slash'),
     path('api/receive-whatsapp/', views.receive_whatsapp, name='receive_whatsapp'),
     path('calendar/', views.calendar_view, name='calendar'),
