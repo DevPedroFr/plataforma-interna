@@ -309,6 +309,125 @@
             border-radius: 12px;
         }
 
+        .whatsapp-live-actions {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-top: 14px;
+            flex-wrap: wrap;
+        }
+
+        .whatsapp-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 10px;
+            border-radius: 999px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: 0.01em;
+        }
+
+        .whatsapp-chip.pending {
+            background: #fff4db;
+            color: #9a6700;
+        }
+
+        .whatsapp-chip.assigned {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .whatsapp-queue-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1.4fr) minmax(320px, 1fr);
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .whatsapp-queue-list {
+            display: grid;
+            gap: 14px;
+        }
+
+        .whatsapp-queue-item {
+            border: 1px solid #e4ecf5;
+            border-radius: 16px;
+            padding: 18px;
+            background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+            box-shadow: 0 8px 20px rgba(31, 45, 61, 0.06);
+        }
+
+        .whatsapp-queue-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 14px;
+            margin-bottom: 12px;
+        }
+
+        .whatsapp-assignee {
+            font-size: 0.84rem;
+            color: #4b5b76;
+        }
+
+        .btn-assign {
+            border: none;
+            border-radius: 10px;
+            padding: 10px 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            background: linear-gradient(135deg, #1dbf73, #149d5e);
+            color: #fff;
+            box-shadow: 0 10px 18px rgba(29, 191, 115, 0.24);
+        }
+
+        .btn-assign:hover {
+            transform: translateY(-1px);
+        }
+
+        .btn-assign[disabled] {
+            cursor: default;
+            opacity: 0.65;
+            box-shadow: none;
+            transform: none;
+        }
+
+        .queue-summary {
+            display: grid;
+            gap: 14px;
+        }
+
+        .queue-summary-card {
+            border-radius: 16px;
+            padding: 18px;
+            background: linear-gradient(135deg, #0f766e, #155e75);
+            color: #fff;
+            box-shadow: 0 14px 28px rgba(15, 118, 110, 0.22);
+        }
+
+        .queue-summary-card strong {
+            display: block;
+            font-size: 1.8rem;
+            margin-top: 4px;
+        }
+
+        .queue-summary-muted {
+            border-radius: 16px;
+            padding: 18px;
+            background: #f8fbff;
+            border: 1px solid #d9e5f1;
+            color: #4b5b76;
+        }
+
+        @media (max-width: 1080px) {
+            .whatsapp-queue-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
         .btn-primary:hover {
             background-color: #1e3c72;
         }
@@ -993,6 +1112,33 @@
                             <div class="whatsapp-live-empty">Aguardando novas mensagens do webhook.</div>
                         </div>
                     </div>
+
+                    <div class="whatsapp-queue-grid">
+                        <div class="card" style="padding:24px;">
+                            <div class="card-header" style="margin-bottom:20px;">
+                                <div>
+                                    <h3 style="font-size:1.1rem;color:#2c3e50;margin:0;">Fila de Atendimentos</h3>
+                                    <p style="margin:6px 0 0 0;color:#66758d;font-size:0.9rem;">Mensagens aguardando retorno humano e quem assumiu cada atendimento.</p>
+                                </div>
+                                <span class="card-icon" style="background:#0f766e; box-shadow: 0 8px 20px rgba(15,118,110,0.25);"><i class="fa-solid fa-headset"></i></span>
+                            </div>
+                            <div id="whatsappQueueList" class="whatsapp-queue-list">
+                                <div class="whatsapp-live-empty">Nenhum atendimento pendente no momento.</div>
+                            </div>
+                        </div>
+
+                        <div class="queue-summary">
+                            <div class="queue-summary-card">
+                                <span>Atendimentos pendentes</span>
+                                <strong id="whatsappPendingCount">0</strong>
+                                <div style="font-size:0.9rem; opacity:0.88;">Itens aguardando alguém clicar em se atribuir.</div>
+                            </div>
+                            <div class="queue-summary-muted">
+                                <div style="font-size:0.92rem; font-weight:700; color:#1e3c72; margin-bottom:8px;">Seu atendimento atual</div>
+                                <div id="whatsappCurrentAssignment" style="line-height:1.6;">Você ainda não assumiu nenhum atendimento.</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
 
@@ -1447,6 +1593,10 @@
     <script>
         const IS_SUPERADMIN = {{ current_user.is_superadmin|default:False|yesno:"true,false" }};
         const IS_ADMIN = {{ is_admin|default:False|yesno:"true,false" }};
+        const CURRENT_SESSION_USER = {
+            username: '{{ current_user.username|default:""|escapejs }}',
+            name: '{{ current_user.name|default:""|escapejs }}'
+        };
         let lastWhatsappNotificationId = null;
         document.addEventListener('DOMContentLoaded', function() {
             // Navegação entre abas
@@ -2613,8 +2763,11 @@
 
             if (!Array.isArray(notifications) || notifications.length === 0) {
                 list.innerHTML = '<div class="whatsapp-live-empty">Nenhuma mensagem recebida ainda.</div>';
+                renderWhatsappQueue([]);
                 return;
             }
+
+            renderWhatsappQueue(notifications);
 
             list.innerHTML = notifications.map((notification) => {
                 const name = escapeHtml(notification.name || 'Contato não identificado');
@@ -2623,6 +2776,11 @@
                 const instance = escapeHtml(notification.instance || '-');
                 const createdAt = escapeHtml(notification.created_at_display || '-');
                 const messageType = escapeHtml(notification.message_type || 'text');
+                const isAssigned = notification.queue_status === 'assigned';
+                const assignedToName = escapeHtml(notification.assigned_to_name || 'Ninguém');
+                const assignedAt = escapeHtml(notification.assigned_at_display || '-');
+                const assignButton = buildAssignButton(notification);
+                const statusChip = `<span class="whatsapp-chip ${isAssigned ? 'assigned' : 'pending'}">${isAssigned ? 'Em atendimento' : 'Pendente'}</span>`;
 
                 return `
                     <div class="whatsapp-live-item">
@@ -2634,10 +2792,116 @@
                             <div class="whatsapp-live-meta">${createdAt}</div>
                         </div>
                         <div class="whatsapp-live-message">${message}</div>
-                        <div class="whatsapp-live-meta" style="margin-top:10px;">Tipo: ${messageType}</div>
+                        <div class="whatsapp-live-actions">
+                            <div>
+                                <div class="whatsapp-live-meta">Tipo: ${messageType}</div>
+                                <div class="whatsapp-live-meta" style="margin-top:6px;">Responsável: ${assignedToName}${isAssigned ? ` · ${assignedAt}` : ''}</div>
+                            </div>
+                            <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:flex-end;">
+                                ${statusChip}
+                                ${assignButton}
+                            </div>
+                        </div>
                     </div>
                 `;
             }).join('');
+        }
+
+        function renderWhatsappQueue(notifications) {
+            const queueList = document.getElementById('whatsappQueueList');
+            const pendingCount = document.getElementById('whatsappPendingCount');
+            const currentAssignment = document.getElementById('whatsappCurrentAssignment');
+            if (!queueList || !pendingCount || !currentAssignment) return;
+
+            const queueItems = Array.isArray(notifications)
+                ? notifications.filter((notification) => ['pending', 'assigned'].includes(notification.queue_status || 'pending'))
+                : [];
+            const pendingItems = queueItems.filter((notification) => notification.queue_status !== 'assigned');
+            const myAssignedItems = queueItems.filter((notification) => notification.assigned_to_username && notification.assigned_to_username === CURRENT_SESSION_USER.username);
+
+            pendingCount.textContent = String(pendingItems.length);
+            currentAssignment.textContent = myAssignedItems.length
+                ? `${myAssignedItems[0].name || 'Contato não identificado'} · ${myAssignedItems[0].phone || '-'}${myAssignedItems.length > 1 ? ` e mais ${myAssignedItems.length - 1}` : ''}`
+                : 'Você ainda não assumiu nenhum atendimento.';
+
+            if (queueItems.length === 0) {
+                queueList.innerHTML = '<div class="whatsapp-live-empty">Nenhum atendimento pendente no momento.</div>';
+                return;
+            }
+
+            queueList.innerHTML = queueItems.map((notification) => {
+                const name = escapeHtml(notification.name || 'Contato não identificado');
+                const phone = escapeHtml(notification.phone || '-');
+                const message = escapeHtml(notification.message || 'Sem conteúdo');
+                const createdAt = escapeHtml(notification.created_at_display || '-');
+                const assignedToName = escapeHtml(notification.assigned_to_name || 'Aguardando atribuição');
+                const assignedAt = escapeHtml(notification.assigned_at_display || 'Ainda não atribuído');
+                const isAssigned = notification.queue_status === 'assigned';
+
+                return `
+                    <div class="whatsapp-queue-item">
+                        <div class="whatsapp-queue-header">
+                            <div>
+                                <div class="whatsapp-live-name">${name}</div>
+                                <div class="whatsapp-live-meta">${phone} · Recebido em ${createdAt}</div>
+                            </div>
+                            <span class="whatsapp-chip ${isAssigned ? 'assigned' : 'pending'}">${isAssigned ? 'Em atendimento' : 'Pendente'}</span>
+                        </div>
+                        <div class="whatsapp-live-message">${message}</div>
+                        <div class="whatsapp-live-actions">
+                            <div class="whatsapp-assignee">Atribuído para: <strong>${assignedToName}</strong><br>Última atualização: ${assignedAt}</div>
+                            ${buildAssignButton(notification)}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function buildAssignButton(notification) {
+            const isAssigned = notification.queue_status === 'assigned';
+            const isMine = notification.assigned_to_username && notification.assigned_to_username === CURRENT_SESSION_USER.username;
+
+            if (isMine) {
+                return '<button class="btn-assign" disabled>Atendimento assumido por você</button>';
+            }
+
+            if (isAssigned) {
+                return '<button class="btn-assign" disabled>Já atribuído</button>';
+            }
+
+            return `<button class="btn-assign" onclick="assignWhatsappNotification(${notification.id})">Se atribuir</button>`;
+        }
+
+        function assignWhatsappNotification(notificationId) {
+            fetch(`/api/notifications/${notificationId}/assign/`, {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-CSRFToken': getCsrfTokenValue(),
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(async (response) => {
+                const data = await response.json().catch(() => ({}));
+                if (!response.ok) {
+                    if (response.status === 409) {
+                        throw new Error(data.assigned_to_name ? `Esse atendimento já foi assumido por ${data.assigned_to_name}.` : 'Esse atendimento já foi assumido por outro usuário.');
+                    }
+                    if (response.status === 401) {
+                        throw new Error('Sua sessão expirou. Atualize a página e entre novamente.');
+                    }
+                    throw new Error('Não foi possível assumir o atendimento.');
+                }
+                return data;
+            })
+            .then(() => {
+                showCustomNotification('✅ Atendimento atribuído a você.', 'success');
+                fetchWhatsappNotifications(false);
+            })
+            .catch((error) => {
+                console.error('Erro ao atribuir atendimento:', error);
+                showCustomNotification(`❌ ${error.message}`, 'error');
+            });
         }
 
         function showWhatsappPopup(notification) {

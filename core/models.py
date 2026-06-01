@@ -66,12 +66,23 @@ class ChatMessage(models.Model):
 
 
 class WhatsappNotification(models.Model):
+    QUEUE_STATUS_PENDING = 'pending'
+    QUEUE_STATUS_ASSIGNED = 'assigned'
+    QUEUE_STATUS_CHOICES = [
+        (QUEUE_STATUS_PENDING, 'Pendente'),
+        (QUEUE_STATUS_ASSIGNED, 'Em atendimento'),
+    ]
+
     name = models.CharField(max_length=255, blank=True)
     phone = models.CharField(max_length=30)
     message = models.TextField()
     instance = models.CharField(max_length=100)
     message_type = models.CharField(max_length=50, blank=True, default='text')
     message_id = models.CharField(max_length=150, blank=True, default='')
+    queue_status = models.CharField(max_length=20, choices=QUEUE_STATUS_CHOICES, default=QUEUE_STATUS_PENDING)
+    assigned_to_name = models.CharField(max_length=255, blank=True, default='')
+    assigned_to_username = models.CharField(max_length=150, blank=True, default='')
+    assigned_at = models.DateTimeField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     read = models.BooleanField(default=False)
 

@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 from json import JSONDecodeError
 
 from django.conf import settings
+from django.db import transaction
 from django.db.models import Count
 from django.http import JsonResponse
 from django.shortcuts import render, redirect
@@ -21,6 +22,28 @@ from web_scraping.services.calendar_scraper import CalendarScraper
 from web_scraping.utils.browser_manager import BrowserManager
 
 from .models import Appointment, ChatMessage, User, Vaccine, WhatsappNotification
+
+
+def _serialize_notification(notification: WhatsappNotification) -> dict:
+    local_created_at = timezone.localtime(notification.created_at)
+    local_assigned_at = timezone.localtime(notification.assigned_at) if notification.assigned_at else None
+    return {
+        'id': notification.id,
+        'name': notification.name,
+        'phone': notification.phone,
+        'message': notification.message,
+        'instance': notification.instance,
+        'message_type': notification.message_type,
+        'message_id': notification.message_id,
+        'read': notification.read,
+        'queue_status': notification.queue_status,
+        'assigned_to_name': notification.assigned_to_name,
+        'assigned_to_username': notification.assigned_to_username,
+        'assigned_at': local_assigned_at.isoformat() if local_assigned_at else None,
+        'assigned_at_display': local_assigned_at.strftime('%d/%m/%Y %H:%M') if local_assigned_at else '',
+        'created_at': local_created_at.isoformat(),
+        'created_at_display': local_created_at.strftime('%d/%m/%Y %H:%M'),
+    }
 
 
 def _is_admin(session_user: dict) -> bool:
@@ -259,14 +282,25 @@ def receive_whatsapp(request):
     if not phone or not message or not instance:
         return JsonResponse({'error': 'missing_fields'}, status=400)
 
-    WhatsappNotification.objects.create(
-        name=body.get('name', ''),
-        phone=phone,
-        message=message,
-        instance=instance,
-        message_type=body.get('message_type', 'text') or 'text',
-        message_id=body.get('message_id', ''),
-    )
+    message_id = body.get('message_id', '')
+    defaults = {
+        'name': body.get('name', ''),
+        'phone': phone,
+        'message': message,
+        'instance': instance,
+        'message_type': body.get('message_type', 'text') or 'text',
+    }
+
+    if message_id:
+        WhatsappNotification.objects.update_or_create(
+            message_id=message_id,
+            defaults=defaults,
+        )
+    else:
+        WhatsappNotification.objects.create(
+            **defaults,
+            message_id='',
+        )
 
     return JsonResponse({'status': 'ok'})
 
@@ -275,22 +309,40 @@ def receive_whatsapp(request):
 @require_http_methods(["GET"])
 def get_notifications(request):
     notifications = list(WhatsappNotification.objects.order_by('-created_at')[:20])
-    data = [
-        {
-            'id': notification.id,
-            'name': notification.name,
-            'phone': notification.phone,
-            'message': notification.message,
-            'instance': notification.instance,
-            'message_type': notification.message_type,
-            'message_id': notification.message_id,
-            'read': notification.read,
-            'created_at': timezone.localtime(notification.created_at).isoformat(),
-            'created_at_display': timezone.localtime(notification.created_at).strftime('%d/%m/%Y %H:%M'),
-        }
-        for notification in notifications
-    ]
+    data = [_serialize_notification(notification) for notification in notifications]
     return JsonResponse(data, safe=False)
+
+
+@login_required
+@require_http_methods(["POST"])
+def assign_notification(request, notification_id):
+    session_user = request.session.get('user', {}) or {}
+    username = (session_user.get('username') or request.session.get('username') or '').strip()
+    display_name = (session_user.get('name') or username).strip()
+
+    if not username:
+        return JsonResponse({'error': 'user_not_identified'}, status=403)
+
+    with transaction.atomic():
+        try:
+            notification = WhatsappNotification.objects.select_for_update().get(pk=notification_id)
+        except WhatsappNotification.DoesNotExist:
+            return JsonResponse({'error': 'notification_not_found'}, status=404)
+
+        if notification.assigned_to_username and notification.assigned_to_username != username:
+            return JsonResponse({
+                'error': 'already_assigned',
+                'assigned_to_name': notification.assigned_to_name,
+                'assigned_to_username': notification.assigned_to_username,
+            }, status=409)
+
+        notification.assigned_to_username = username
+        notification.assigned_to_name = display_name
+        notification.assigned_at = timezone.now()
+        notification.queue_status = WhatsappNotification.QUEUE_STATUS_ASSIGNED
+        notification.save(update_fields=['assigned_to_username', 'assigned_to_name', 'assigned_at', 'queue_status'])
+
+    return JsonResponse({'status': 'ok', 'notification': _serialize_notification(notification)})
 
 @method_decorator(csrf_exempt, name='dispatch')
 class SyncCalendarView(View):

@@ -32,6 +32,6 @@ class ChatMessageAdmin(admin.ModelAdmin):
 
 @admin.register(WhatsappNotification)
 class WhatsappNotificationAdmin(admin.ModelAdmin):
-    list_display = ['name', 'phone', 'instance', 'message_type', 'message_id', 'read', 'created_at']
-    list_filter = ['instance', 'message_type', 'read', 'created_at']
-    search_fields = ['name', 'phone', 'message', 'message_id']
+    list_display = ['name', 'phone', 'instance', 'message_type', 'queue_status', 'assigned_to_name', 'message_id', 'read', 'created_at']
+    list_filter = ['instance', 'message_type', 'queue_status', 'read', 'created_at']
+    search_fields = ['name', 'phone', 'message', 'message_id', 'assigned_to_name', 'assigned_to_username']
