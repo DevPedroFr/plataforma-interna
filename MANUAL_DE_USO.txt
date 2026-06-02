@@ -1,0 +1,636 @@
+PLATAFORMA INTERNA JM VACINAS
+MANUAL DE USO
+============================================================
+
+
+APRESENTACAO
+============================================================
+
+Este manual foi criado para ajudar a equipe a entender e utilizar todas as
+funcionalidades da plataforma interna JM Vacinas. Aqui voce encontrara
+explicacoes passo a passo de cada area do sistema, sem jargoes tecnicos.
+
+A plataforma foi desenvolvida para centralizar o controle de agendamentos,
+estoque de vacinas, comunicacao com pacientes via WhatsApp e gestao da
+equipe, tudo em um unico lugar.
+
+
+SUMARIO
+============================================================
+
+  1. Acesso ao Sistema
+  2. Tela Inicial (Dashboard)
+  3. Agendamentos
+  4. Calendario
+  5. Estoque de Vacinas
+  6. Atendimentos via WhatsApp
+  7. Chatbot Automatico
+  8. Gestao de Usuarios
+  9. Perfil e Senha
+  10. Niveis de Acesso
+
+
+============================================================
+1. ACESSO AO SISTEMA
+============================================================
+
+
+Como fazer login
+------------------------------------------------------------
+
+Para acessar a plataforma, abra o endereco da plataforma no navegador.
+Voce vera a tela de login, onde devera preencher:
+
+  - Usuario: o nome de usuario cadastrado para voce pelo administrador
+  - Senha: a senha definida no momento do cadastro
+
+Apos preencher os dois campos, clique em Entrar. Se as informacoes
+estiverem corretas, voce sera direcionado automaticamente para a tela
+inicial.
+
+
+Primeiro acesso
+------------------------------------------------------------
+
+Caso seja seu primeiro acesso, o sistema solicitara que voce troque a
+senha temporaria por uma senha de sua escolha. Essa medida existe para
+garantir que apenas voce conheca sua senha pessoal.
+
+  1. Digite a senha temporaria fornecida pelo administrador
+  2. Digite a nova senha desejada
+  3. Confirme a nova senha
+  4. Clique em Salvar
+
+A partir desse momento, voce usara a nova senha em todos os proximos
+acessos.
+
+
+Como sair do sistema
+------------------------------------------------------------
+
+Para sair, localize seu nome ou o icone de usuario no menu lateral e
+clique em Sair ou Logout. O sistema encerrara sua sessao e voltara
+para a tela de login.
+
+Nunca feche apenas a aba do navegador sem sair, especialmente em
+computadores compartilhados.
+
+
+============================================================
+2. TELA INICIAL (DASHBOARD)
+============================================================
+
+A tela inicial e o painel de controle da plataforma. Assim que voce fizer
+login, ela exibira um resumo completo do que esta acontecendo na clinica
+naquele momento: numeros de agendamentos, estoque, mensagens recebidas
+e muito mais.
+
+
+Cards de indicadores principais
+------------------------------------------------------------
+
+No topo da tela inicial, ha quatro cartoes que mostram os principais
+numeros da clinica:
+
+  VACINAS APLICADAS
+  Total de vacinacoes concluidas no sistema. Inclui um grafico com a
+  variacao dos ultimos 7 dias.
+
+  PACIENTES CADASTRADOS
+  Quantidade total de pacientes registrados. O grafico mostra o
+  crescimento recente.
+
+  ESTOQUE DISPONIVEL
+  Percentual do estoque atual em relacao ao estoque minimo. Se estiver
+  baixo, o numero aparecera em amarelo ou vermelho.
+
+  PROXIMAS VACINACOES
+  Quantidade de agendamentos previstos a partir de hoje para os proximos
+  dias.
+
+Esses numeros sao atualizados automaticamente e refletem sempre os dados
+mais recentes do sistema.
+
+
+Painel de Analytics
+------------------------------------------------------------
+
+Abaixo dos cards principais, existe uma secao com mais detalhes:
+
+  STATUS DOS AGENDAMENTOS
+  Mostra em dois blocos: a quantidade de agendamentos com status
+  Agendado e a quantidade ja marcada como Concluido. E uma visao
+  rapida de como esta a agenda do dia.
+
+  BASE DE PACIENTES
+  Exibe o numero total de pacientes ativos cadastrados na plataforma.
+
+  STATUS DO ESTOQUE
+  Mostra o percentual de disponibilidade do estoque de vacinas de forma
+  mais visual, com icone indicador.
+
+
+Resumo Geral
+------------------------------------------------------------
+
+Uma secao com blocos de resumo apresentando os numeros consolidados
+da clinica:
+
+  - Total de pacientes
+  - Total de vacinas aplicadas
+  - Total de agendamentos
+  - Percentual de estoque disponivel
+
+Esse resumo e util para uma leitura rapida da situacao atual do negocio.
+
+
+Notificacoes de WhatsApp
+------------------------------------------------------------
+
+Quando uma nova mensagem de WhatsApp chega de algum paciente, um aviso
+aparece automaticamente no canto superior direito da tela, mostrando:
+
+  - Nome do contato
+  - Numero de telefone
+  - Instancia do WhatsApp que recebeu a mensagem
+  - Conteudo da mensagem
+  - Horario de recebimento
+
+O aviso desaparece sozinho apos alguns segundos, mas voce pode fecha-lo
+manualmente clicando no botao Fechar. Para ver todas as mensagens e
+gerenciar os atendimentos, acesse a aba Atendimentos.
+
+
+============================================================
+3. AGENDAMENTOS
+============================================================
+
+A secao de Agendamentos e onde toda a gestao de consultas e vacinacoes
+e realizada. Voce pode criar novos agendamentos, verificar os existentes,
+atualizar informacoes ou cancelar quando necessario.
+
+
+Criar um novo agendamento
+------------------------------------------------------------
+
+Para agendar uma vacinacao, clique no botao Novo Agendamento disponivel
+na tela inicial ou na aba de agendamentos. Uma janela sera aberta
+solicitando as seguintes informacoes:
+
+  1. PACIENTE
+     Digite o nome do paciente. O sistema buscara automaticamente nos
+     cadastros existentes conforme voce digitar.
+
+  2. VACINA
+     Selecione a vacina que sera aplicada. Apenas as vacinas cadastradas
+     no estoque aparecerao na lista.
+
+  3. DATA
+     Informe a data desejada para a vacinacao no formato DD/MM/AAAA.
+
+  4. HORARIO
+     Informe o horario da consulta.
+
+  5. DOSE
+     Indique qual dose sera aplicada (ex: 1a dose, 2a dose, reforco).
+
+  6. STATUS
+     Define a situacao inicial do agendamento. Normalmente comeca como
+     Agendado.
+
+  7. OBSERVACOES (opcional)
+     Campo livre para anotar qualquer informacao adicional importante
+     sobre aquele agendamento especifico.
+
+Apos preencher todos os campos obrigatorios, clique em Salvar. O
+agendamento aparecera no calendario e na lista de agendamentos.
+
+
+Status dos agendamentos
+------------------------------------------------------------
+
+Cada agendamento possui um status que indica em que etapa ele se encontra:
+
+  AGENDADO     O horario foi reservado mas ainda nao confirmado.
+  CONFIRMADO   O paciente confirmou presenca.
+  CONCLUIDO    A vacinacao foi realizada com sucesso.
+  CANCELADO    O agendamento nao sera mais realizado.
+
+Para alterar o status, abra os detalhes do agendamento, selecione o novo
+status no campo correspondente e salve.
+
+
+Agendamentos atrasados
+------------------------------------------------------------
+
+O sistema identifica automaticamente agendamentos que ja passaram da data
+e hora marcadas sem ter sido concluidos. Esses registros aparecem com uma
+marcacao vermelha para facilitar a identificacao. Isso ajuda a equipe a
+entrar em contato com pacientes que nao compareceram ou a reorganizar
+a agenda.
+
+
+Sincronizar agendamentos com o sistema externo
+------------------------------------------------------------
+
+A plataforma pode importar agendamentos diretamente do sistema GoC
+Franquias. Para isso, clique no botao de sincronizacao disponivel na
+area de agendamentos. O sistema buscara automaticamente os novos registros
+e os adicionara a agenda. Ao final, sera exibida uma mensagem informando
+quantos agendamentos foram importados.
+
+
+============================================================
+4. CALENDARIO
+============================================================
+
+O Calendario oferece uma visao mensal de todos os agendamentos,
+facilitando a organizacao do dia a dia da clinica.
+
+
+Navegando pelo calendario
+------------------------------------------------------------
+
+Ao entrar na aba Calendario, voce vera o mes atual com todos os dias
+dispostos em grade. Para navegar entre os meses:
+
+  - Clique na seta para a esquerda para ir ao mes anterior
+  - Clique na seta para a direita para ir ao proximo mes
+
+O dia de hoje aparece destacado em azul para facilitar a localizacao.
+
+
+Lendo o calendario
+------------------------------------------------------------
+
+Cada dia que possuir agendamentos mostrara um pequeno indicador verde.
+Ao clicar em um dia, uma janela se abrira listando todos os agendamentos
+daquela data com os seguintes detalhes:
+
+  - Nome do paciente
+  - Vacina agendada
+  - Horario
+  - Status atual (Agendado, Confirmado, Concluido, Cancelado)
+
+
+Agendamentos de hoje
+------------------------------------------------------------
+
+Na lateral do calendario, ha um painel dedicado aos agendamentos do dia
+atual, organizados por horario (do mais cedo para o mais tarde). Isso
+facilita o acompanhamento da agenda durante o expediente, sem precisar
+clicar no dia.
+
+
+============================================================
+5. ESTOQUE DE VACINAS
+============================================================
+
+O modulo de estoque permite controlar todas as vacinas disponiveis na
+clinica, seus quantitativos, informacoes de validade, laboratorio e
+valores.
+
+
+Visualizando o estoque
+------------------------------------------------------------
+
+Na aba de estoque, cada vacina e exibida em um cartao individual contendo:
+
+  - Nome da vacina
+  - Laboratorio fabricante
+  - Numero do lote
+  - Data de validade
+  - Quantidade atual em estoque
+  - Quantidade disponivel para venda
+  - Quantidade minima (nivel de alerta)
+  - Faixa etaria recomendada
+  - Valor de compra e valor de venda
+
+
+Indicadores de status do estoque
+------------------------------------------------------------
+
+Cada vacina possui um indicador colorido que mostra a situacao do estoque
+de forma rapida:
+
+  VERDE     Disponivel - estoque acima do minimo necessario.
+
+  AMARELO   Estoque Baixo - proximo ou abaixo do minimo. Atencao
+            necessaria para reposicao.
+
+  VERMELHO  Esgotado - sem unidades disponiveis. Reposicao urgente.
+
+
+Resumo financeiro do estoque
+------------------------------------------------------------
+
+Cada cartao de vacina apresenta dois valores financeiros automaticos:
+
+  VALOR DO INVENTARIO
+  Calculado multiplicando a quantidade atual pelo preco de compra.
+  Mostra quanto a clinica investiu naquele item.
+
+  RECEITA POTENCIAL
+  Calculado multiplicando a quantidade disponivel pelo preco de venda.
+  Mostra o valor que pode ser gerado com aquele estoque.
+
+
+Painel de resumo do estoque
+------------------------------------------------------------
+
+No topo da aba de estoque, um resumo rapido exibe:
+
+  - Numero total de tipos de vacinas cadastradas
+  - Quantas estao com estoque esgotado
+  - Quantas estao com estoque abaixo do minimo
+  - Valor total do inventario e receita potencial geral
+
+
+Cadastrar uma nova vacina
+------------------------------------------------------------
+
+Para adicionar uma nova vacina ao estoque, clique em Nova Vacina.
+Sera necessario preencher:
+
+  1. Nome da vacina
+  2. Laboratorio
+  3. Numero do lote
+  4. Data de validade
+  5. Estoque atual (quantidade em maos)
+  6. Estoque disponivel para venda
+  7. Estoque minimo (limiar para alertas)
+  8. Preco de compra
+  9. Preco de venda
+  10. Faixa etaria minima e maxima recomendada
+
+Apenas administradores tem permissao para cadastrar novas vacinas.
+
+
+Atualizar quantidades de estoque
+------------------------------------------------------------
+
+Para atualizar a quantidade de uma vacina ja cadastrada (por exemplo,
+apos receber uma nova remessa), clique no botao de edicao no cartao da
+vacina correspondente. Altere os valores necessarios e salve.
+
+Apenas administradores tem permissao para editar o estoque.
+
+
+Sincronizar estoque com o sistema externo
+------------------------------------------------------------
+
+Assim como nos agendamentos, o estoque pode ser sincronizado com os dados
+do GoC Franquias. O botao de sincronizacao buscara os dados mais recentes
+do sistema externo e atualizara automaticamente as informacoes da
+plataforma.
+
+
+============================================================
+6. ATENDIMENTOS VIA WHATSAPP
+============================================================
+
+A aba de Atendimentos centraliza todas as mensagens recebidas via
+WhatsApp pelos pacientes, permitindo que a equipe gerencie as conversas
+sem sair da plataforma.
+
+
+Como funciona
+------------------------------------------------------------
+
+Quando um paciente envia uma mensagem para o numero de WhatsApp da
+clinica, ela e capturada automaticamente e exibida na aba de Atendimentos
+em tempo real. A pagina se atualiza a cada 3 segundos, sem precisar
+recarregar manualmente.
+
+
+Lista de mensagens recebidas
+------------------------------------------------------------
+
+Todas as mensagens recebidas aparecem em ordem cronologica, com as mais
+recentes no topo. Cada mensagem mostra:
+
+  - Nome do contato (ou numero, caso nao identificado)
+  - Numero de telefone
+  - Conteudo da mensagem
+  - Horario de recebimento
+  - Instancia do WhatsApp que recebeu
+  - Status do atendimento (Pendente, Em Atendimento, Finalizado)
+  - Responsavel pelo atendimento (se ja foi atribuido)
+
+
+Fila de atendimentos
+------------------------------------------------------------
+
+Ao lado da lista de mensagens, ha uma fila que exibe apenas os
+atendimentos pendentes e em andamento, facilitando o controle de quem
+ainda precisa de resposta. A fila e dividida visualmente entre:
+
+  - Atendimentos aguardando atribuicao
+  - Atendimentos ja assumidos por alguem da equipe
+
+
+Se atribuir a um atendimento
+------------------------------------------------------------
+
+Quando voce decide responder a uma mensagem, clique em Se Atribuir
+na mensagem correspondente. Isso marca o atendimento com seu nome e
+muda o status para Em Atendimento.
+
+Esse sistema evita que duas pessoas da equipe respondam o mesmo paciente
+ao mesmo tempo. Assim que alguem se atribui, os demais veem que aquela
+conversa ja esta sendo tratada.
+
+
+Finalizar um atendimento
+------------------------------------------------------------
+
+Apos resolver a solicitacao do paciente, clique em Finalizar Atendimento.
+O status mudara para Finalizado e a mensagem saira da fila ativa.
+Somente o responsavel atribuido pode finalizar o atendimento.
+
+
+Contagem de atendimentos
+------------------------------------------------------------
+
+No canto da secao, ha tres contadores que se atualizam em tempo real:
+
+  PENDENTES     Mensagens sem responsavel atribuido ainda.
+  EM ANDAMENTO  Mensagens sendo atendidas pela equipe.
+  MEUS          Mensagens que voce pessoalmente esta atendendo.
+
+
+============================================================
+7. CHATBOT AUTOMATICO
+============================================================
+
+O chatbot e um assistente virtual que responde automaticamente as
+mensagens dos pacientes via WhatsApp, utilizando inteligencia artificial
+para entender as perguntas e fornecer respostas uteis.
+
+
+O que o chatbot faz automaticamente
+------------------------------------------------------------
+
+  - Responde duvidas frequentes sobre vacinas disponiveis
+  - Informa horarios de funcionamento da clinica
+  - Orienta sobre documentos necessarios para vacinacao
+  - Explica pre-requisitos para determinadas vacinas
+  - Identifica quando o paciente quer agendar uma consulta
+  - Pergunta se e a primeira vez que o paciente se vacina na clinica
+
+Toda a inteligencia do chatbot e alimentada pelo Google Gemini, que
+interpreta o texto do paciente e gera respostas naturais e contextuais.
+
+
+Cadastro automatico de paciente
+------------------------------------------------------------
+
+Quando o chatbot identifica que o paciente nao esta cadastrado, ele
+inicia automaticamente um fluxo de cadastro, solicitando:
+
+  1. Nome completo
+  2. CPF
+  3. Telefone
+  4. E-mail
+  5. Data de nascimento
+  6. Endereco
+
+O paciente responde pelo proprio WhatsApp e os dados sao registrados
+automaticamente no sistema.
+
+
+Transferencia para atendimento humano
+------------------------------------------------------------
+
+Quando o chatbot nao consegue resolver a solicitacao ou identifica que
+o paciente precisa de atendimento personalizado, ele encerra o fluxo
+automatico e a conversa e direcionada para a fila de atendimento humano
+na aba Atendimentos. A equipe recebera a notificacao em tempo real.
+
+
+============================================================
+8. GESTAO DE USUARIOS
+============================================================
+
+Esta secao e restrita a usuarios com perfil de Administrador. Ela
+permite criar, visualizar, editar e remover os usuarios que tem acesso
+a plataforma.
+
+
+Ver a lista de usuarios
+------------------------------------------------------------
+
+Na aba de Usuarios, voce vera todos os membros da equipe cadastrados,
+exibidos com:
+
+  - Nome completo
+  - Nome de usuario (login)
+  - Cargo ou funcao
+  - Nivel de acesso (Administrador, Operador, etc.)
+  - Iniciais em avatar colorido para identificacao visual rapida
+
+
+Criar um novo usuario
+------------------------------------------------------------
+
+Para adicionar um novo membro da equipe, clique em Novo Usuario
+e preencha:
+
+  1. Nome de usuario (sera usado no login)
+  2. Nome completo
+  3. Cargo ou funcao
+  4. Nivel de acesso
+
+O novo usuario recebera uma senha temporaria e sera solicitado a
+troca-la no primeiro acesso.
+
+
+Editar um usuario
+------------------------------------------------------------
+
+Para alterar as informacoes de um usuario existente, localize-o na lista
+e clique no icone de edicao. Voce podera alterar nome, cargo e nivel
+de acesso.
+
+
+Remover um usuario
+------------------------------------------------------------
+
+Para remover o acesso de um colaborador, clique no icone de exclusao
+ao lado do nome. Sera solicitada uma confirmacao antes de concluir a acao.
+
+ATENCAO: Nao e possivel remover o proprio usuario que esta logado.
+Essa restricao existe para evitar que o sistema fique sem administrador.
+
+
+============================================================
+9. PERFIL E SENHA
+============================================================
+
+
+Ver seu perfil
+------------------------------------------------------------
+
+Clicando no seu nome ou no icone de perfil no menu, voce pode ver seus
+dados cadastrais: nome completo, nome de usuario e cargo.
+
+
+Trocar sua senha
+------------------------------------------------------------
+
+Para alterar sua senha, acesse Alterar Senha no menu de perfil.
+Voce devera:
+
+  1. Digitar sua senha atual
+  2. Digitar a nova senha
+  3. Confirmar a nova senha
+
+Clique em Salvar para confirmar a troca. A nova senha ja valera no
+proximo acesso.
+
+
+============================================================
+10. NIVEIS DE ACESSO
+============================================================
+
+A plataforma possui tres perfis de acesso, cada um com permissoes
+diferentes:
+
+
+OPERADOR
+  Acesso ao dashboard, calendario, agendamentos e atendimentos via
+  WhatsApp. Nao pode gerenciar usuarios nem editar o estoque.
+
+ADMINISTRADOR
+  Acesso completo a todas as funcionalidades: criar e remover usuarios,
+  editar e cadastrar vacinas no estoque, visualizar todos os dados.
+
+SUPERADMINISTRADOR
+  Alem de tudo que o Administrador pode fazer, tambem pode redefinir a
+  senha de outros usuarios. Perfil reservado para responsaveis tecnicos.
+
+
+Se voce tentar acessar uma funcao que nao esta disponivel para o seu
+perfil, o sistema exibira uma mensagem informando que aquela acao nao
+e permitida.
+
+
+============================================================
+DUVIDAS E SUPORTE
+============================================================
+
+Em caso de problemas com acesso, erros no sistema ou duvidas que nao
+foram esclarecidas por este manual, entre em contato com o administrador
+responsavel pela plataforma.
+
+Antes de reportar um problema, tenha em maos:
+
+  - O que voce estava tentando fazer
+  - Qual mensagem de erro apareceu (se houver)
+  - A data e hora em que o problema ocorreu
+
+
+============================================================
+JM Vacinas - Plataforma Interna
+Versao do manual: Junho de 2026
+============================================================
