@@ -791,6 +791,17 @@
             100% { transform: rotate(360deg); }
         }
 
+        @keyframes whatsappToastIn {
+            0%   { opacity: 0; transform: translateX(110%) scale(0.92); }
+            60%  { opacity: 1; transform: translateX(-8px) scale(1.02); }
+            80%  { transform: translateX(4px) scale(0.99); }
+            100% { opacity: 1; transform: translateX(0) scale(1); }
+        }
+
+        .whatsapp-toast-enter {
+            animation: whatsappToastIn 0.52s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+        }
+
         .empty-state {
             text-align: center;
             padding: 60px 20px;
@@ -2950,6 +2961,11 @@
             document.getElementById('whatsappPopupMessage').textContent = notification.message || 'Sem conteúdo';
             document.getElementById('whatsappPopupType').textContent = notification.message_type || 'text';
             document.getElementById('whatsappPopupCreatedAt').textContent = notification.created_at_display || '-';
+
+            // reinicia animação mesmo se o toast já estiver visível
+            modal.classList.remove('whatsapp-toast-enter');
+            void modal.offsetWidth; // força reflow
+            modal.classList.add('whatsapp-toast-enter');
             modal.style.display = 'block';
 
             if (whatsappPopupTimeout) {
